@@ -5,8 +5,9 @@
 // Times are in "play time" ms (only advances while the ball is in play), so pauses,
 // goals and replays don't eat into them.
 import * as Phaser from 'phaser';
-import { FIELD, MID_Y, BALL_R, HAZARDS, PALETTE } from '../config.js';
+import { GAME_W, FIELD, MID_Y, BALL_R, HAZARDS, PALETTE } from '../config.js';
 import { SPRITE_SCALE } from '../art.js';
+import { titleText } from '../ui.js';
 import { floatText } from './juice.js';
 import { sfx } from '../sound.js';
 
@@ -22,7 +23,7 @@ export default class Hazards {
 
   // Clears the pitch and schedules the next item (called at every kickoff).
   reset(playTime) {
-    for (const item of this.items) item.sprite.destroy();
+    for (const item of this.items) item.parts.forEach((part) => part.destroy());
     this.items = [];
     this.lastBall = null;
     this.nextSpawn = playTime + Phaser.Math.Between(HAZARDS.spawnMin, HAZARDS.spawnMax);
@@ -67,11 +68,26 @@ export default class Hazards {
       const crowded = [...avoid, ...this.items].some((o) => Math.hypot(o.x - x, o.y - y) < 110);
       if (crowded) continue;
 
+      const s = this.scene;
       const type = Math.random() < 0.5 ? 'ice' : 'soap';
-      const sprite = this.scene.add.image(x, y, type).setDepth(3.5).setScale(0);
-      this.scene.tweens.add({ targets: sprite, scale: SPRITE_SCALE * 1.1, duration: 280, ease: 'Back.Out' });
-      this.scene.tweens.add({ targets: sprite, angle: { from: -6, to: 6 }, duration: 700, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
-      this.items.push({ type, x, y, sprite, until: playTime + HAZARDS.lifetime });
+      // A bullseye on the grass under the item says "hit this", not "walk over this".
+      const target = s.add.image(x, y, 'target').setDepth(3.4).setScale(0).setAlpha(0.85);
+      s.tweens.add({ targets: target, scale: SPRITE_SCALE * 1.5, duration: 280, ease: 'Back.Out' });
+      s.tweens.add({ targets: target, scale: SPRITE_SCALE * 1.3, delay: 280, duration: 500, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
+      const sprite = s.add.image(x, y, type).setDepth(3.5).setScale(0);
+      s.tweens.add({ targets: sprite, scale: SPRITE_SCALE * 1.1, duration: 280, ease: 'Back.Out' });
+      s.tweens.add({ targets: sprite, angle: { from: -6, to: 6 }, duration: 700, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
+      const parts = [target, sprite];
+
+      // Until the player has won one with the ball, each item explains itself.
+      if (!knowsPowerUps()) {
+        const hint = titleText(s, Phaser.Math.Clamp(x, 150, GAME_W - 150), y - 62, '¡PEGALE CON\nLA PELOTA!', 20, PALETTE.yellow)
+          .setDepth(12).setLineSpacing(-6);
+        s.tweens.add({ targets: hint, y: hint.y - 8, duration: 450, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
+        parts.push(hint);
+      }
+
+      this.items.push({ type, x, y, sprite, parts, until: playTime + HAZARDS.lifetime });
       sfx.spawn();
       return;
     }
@@ -79,23 +95,34 @@ export default class Hazards {
 
   remove(item, instant) {
     this.items = this.items.filter((i) => i !== item);
-    const { sprite } = item;
-    this.scene.tweens.killTweensOf(sprite);
-    if (instant) {
-      sprite.destroy();
-      return;
+    for (const part of item.parts) {
+      this.scene.tweens.killTweensOf(part);
+      if (instant) part.destroy();
+      else this.scene.tweens.add({ targets: part, scale: 0, alpha: 0, duration: 200, onComplete: () => part.destroy() });
     }
-    this.scene.tweens.add({ targets: sprite, scale: 0, alpha: 0, duration: 200, onComplete: () => sprite.destroy() });
   }
 
-  // The ball hit the item: it flies from there at the rival of whoever touched the ball
-  // last, spinning across the pitch, and the effect lands when it arrives.
+  // The ball hit the item: it shatters (ice) or bursts (soap), then flies from there at
+  // the rival of whoever touched the ball last, spinning across the pitch. The effect
+  // lands when it arrives.
   grab(item, owner, rival) {
     this.remove(item, true);
     const s = this.scene;
     owner.squash = 0.6;
-    sfx.spawn();
-    floatText(s, item.x, item.y - 40, item.type === 'ice' ? '¡TOMÁ HIELO!' : '¡TOMÁ JABÓN!', PALETTE.white, 22);
+    this.shatter(item);
+
+    // Now the player knows how it works: no more hints, in this match or the next ones.
+    if (!knowsPowerUps()) {
+      rememberPowerUps();
+      for (const other of this.items) {
+        const hint = other.parts[2];
+        if (hint) {
+          other.parts.pop();
+          s.tweens.killTweensOf(hint);
+          s.tweens.add({ targets: hint, alpha: 0, duration: 200, onComplete: () => hint.destroy() });
+        }
+      }
+    }
 
     const shot = s.add.image(item.x, item.y, item.type).setDepth(6).setScale(SPRITE_SCALE * 1.1);
     const flight = { t: 0 };
@@ -112,6 +139,29 @@ export default class Hazards {
         if (s.state === 'playing') this.apply(item.type, rival);
       },
     });
+  }
+
+  // Game juice for a hit: the ice breaks into shards, the soap pops into bubbles.
+  shatter(item) {
+    const s = this.scene;
+    const { x, y } = item;
+    s.hitstop = Math.max(s.hitstop, 50);
+    s.cameras.main.shake(90, 0.006);
+    if (item.type === 'ice') {
+      sfx.crack();
+      floatText(s, x, y - 40, '¡CRASH!', PALETTE.cyan, 30);
+      s.grass.emit(x, y, {
+        count: 24, speed: [180, 440], life: [400, 750], size: [4, 10],
+        colors: [0xd4f4ff, 0x7fd6ff, 0xffffff], shape: 'rect', drag: 3,
+      });
+    } else {
+      sfx.splash();
+      floatText(s, x, y - 40, '¡PLOP!', '#ff7ac0', 30);
+      s.dust.emit(x, y, {
+        count: 22, speed: [90, 280], life: [450, 850], size: [4, 10], grow: 0.6,
+        colors: [0xffffff, 0xffc2e2, 0xd8f4ff], alpha: 0.85, drag: 2,
+      });
+    }
   }
 
   apply(type, p) {
@@ -140,8 +190,33 @@ export default class Hazards {
   }
 
   destroy() {
-    for (const item of this.items) item.sprite.destroy();
+    for (const item of this.items) item.parts.forEach((part) => part.destroy());
     this.items = [];
+  }
+}
+
+// Whether this browser's player has already won a power-up with the ball (then the
+// "¡PEGALE CON LA PELOTA!" hints stop showing).
+const KNOWS_KEY = 'tejo-futbol-sabe-powerups';
+let knows = null;
+
+function knowsPowerUps() {
+  if (knows === null) {
+    try {
+      knows = localStorage.getItem(KNOWS_KEY) === '1';
+    } catch {
+      knows = false;
+    }
+  }
+  return knows;
+}
+
+function rememberPowerUps() {
+  knows = true;
+  try {
+    localStorage.setItem(KNOWS_KEY, '1');
+  } catch {
+    // Private mode: the hints just come back next time.
   }
 }
 

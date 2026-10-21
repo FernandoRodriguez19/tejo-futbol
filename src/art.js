@@ -27,6 +27,7 @@ export function makeTextures(scene) {
   canvasTexture(tex, 'chili', 56, 72, drawChili);
   canvasTexture(tex, 'ice', 64 * S, 64 * S, (ctx) => drawIce(ctx, 64 * S));
   canvasTexture(tex, 'soap', 64 * S, 64 * S, (ctx) => drawSoap(ctx, 64 * S));
+  canvasTexture(tex, 'target', 100 * S, 100 * S, (ctx) => drawTarget(ctx, 100 * S));
 
   const bSize = (BALL_R + 3) * 2 * S;
   canvasTexture(tex, 'ball', bSize, bSize, (ctx) => drawBall(ctx, bSize));
@@ -465,6 +466,22 @@ function drawSoap(ctx, size) {
     ctx.fillStyle = '#ffffff';
     ctx.fill();
   }
+}
+
+// Red and white bullseye painted on the grass under each power-up: "hit this with the ball".
+function drawTarget(ctx, size) {
+  const c = size / 2;
+  const r = c - 4 * S;
+  const rings = [C.p2, C.white, C.p2, C.white, C.p2];
+  rings.forEach((color, i) => {
+    circle(ctx, c, c, r * (1 - i / rings.length));
+    ctx.fillStyle = color;
+    ctx.fill();
+  });
+  circle(ctx, c, c, r);
+  ctx.lineWidth = 3 * S;
+  ctx.strokeStyle = C.ink;
+  ctx.stroke();
 }
 
 // Robot head for the "VS BOT" menu card.

@@ -60,6 +60,19 @@ export const HAZARDS = {
   throwTime: 350, // ms the item takes to fly to the rival
 };
 
+// Volumes (0..1, before the sound button's level). The hits are synthesized and quiet on
+// their own, so they go through a boost; the recorded music and crowd stay lower so the
+// hits can be heard over them.
+export const AUDIO = {
+  sfxBoost: 2.2, // every synthesized effect (kicks, bounces, post...)
+  menuMusic: 0.4,
+  matchMusic: 0.2,
+  matchMusicDucked: 0.08, // while a chant is playing
+  chant: 0.3,
+  goalShout: 0.8,
+  ooh: 0.6,
+};
+
 export const WIN_GOALS = 5;
 export const GOAL_PAUSE = 1600; // ms celebrating before the kickoff
 export const KICKOFF_DELAY = 700; // ms the ball waits in the centre

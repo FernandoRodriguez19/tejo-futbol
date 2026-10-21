@@ -20,6 +20,8 @@ Juego de fútbol 1 vs 1 en cancha vertical (mezcla de Pong, Haxball y tejo) hech
 - `src/main.js` — configuración de Phaser y lista de escenas.
 - `src/config.js` — todas las constantes del juego (tamaños, velocidades, goles para ganar).
 - `src/sound.js` — efectos de sonido generados con Web Audio (no hay archivos de audio).
+  Pasan por un refuerzo y un limitador; los volúmenes de todo el audio están en `AUDIO`
+  de `src/config.js`.
 - `src/music.js` — audio grabado (en `public/audio/`, copiado de `musica futbol tejo/`):
   música del menú (loop), música de fondo del partido (rotación de 4 temas que cambia en
   cada gol), cantos de hinchada (bajan la música mientras suenan), grito de gol y "uuuh". Los cantos se disparan desde

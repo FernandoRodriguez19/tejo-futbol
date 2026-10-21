@@ -2,6 +2,7 @@
 // music (a rotation of tracks), crowd chants and one-shot sounds. The synthesized
 // effects live in sound.js.
 import { getVolume, onVolumeChange } from './sound.js';
+import { AUDIO } from './config.js';
 
 const BASE = import.meta.env.BASE_URL;
 const FILES = {
@@ -16,11 +17,11 @@ const FILES = {
   goal: `${BASE}audio/grito-gol.mp3`,
   ooh: `${BASE}audio/uuuh.wav`,
 };
-const MENU_VOLUME = 0.45;
+const MENU_VOLUME = AUDIO.menuMusic;
 const MATCH_TRACKS = ['drums', 'bg1', 'bg2', 'bg3'];
-const BG_VOLUME = 0.35;
-const DUCKED_BG = 0.12; // background volume while a chant is playing
-const CHANT_VOLUME = 0.5;
+const BG_VOLUME = AUDIO.matchMusic;
+const DUCKED_BG = AUDIO.matchMusicDucked; // background volume while a chant is playing
+const CHANT_VOLUME = AUDIO.chant;
 const FADE_MS = 600;
 
 // Every sound keeps its own level (audio.level, 0..1) and plays at level × the master
@@ -212,7 +213,7 @@ export function resumeChant() {
 
 // ---------- one-shots ----------
 
-const ONE_SHOT_VOLUME = { goal: 0.8, ooh: 0.7 };
+const ONE_SHOT_VOLUME = { goal: AUDIO.goalShout, ooh: AUDIO.ooh };
 
 export function playSound(name) {
   const audio = newAudio(name, ONE_SHOT_VOLUME[name] ?? 0.7);

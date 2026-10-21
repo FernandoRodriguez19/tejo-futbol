@@ -72,6 +72,12 @@ pelota en el arco rival. La pelota nunca frena y con cada rebote se hace más r�
   aunque después haya rebotado en las paredes) y sale volando girando hacia el otro
   jugador. Pasar caminando por encima no hace nada. Justo después de un saque, antes de
   que alguien toque la pelota, la pelota pasa por encima sin activarlo.
+- Cada uno aparece sobre una **diana roja y blanca** pintada en el pasto, para que se
+  entienda que hay que pegarle. Hasta que el jugador gana uno por primera vez, también
+  muestra el cartel "¡PEGALE CON LA PELOTA!"; después se guarda en el navegador y no
+  aparece más.
+- Al pegarle, el hielo **estalla en pedazos** ("¡CRASH!") y el jabón **en burbujas**
+  ("¡PLOP!"), con un mini freno y temblor de cámara, y sale volando al rival.
 - **Hielo:** el rival queda congelado 5 s: se mueve al 30% y no puede usar el dash.
 - **Jabón:** el rival patina 6 s con muy poco agarre: le cuesta mucho frenar y doblar.
 - Se borran en cada saque.

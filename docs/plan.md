@@ -41,6 +41,9 @@
   volumen alto → medio → mudo, y se recuerda.
 - [x] 11. Hielo y jabón se ganan con la pelota: cuando la pelota choca con uno, se lo lleva
   el último que la tocó y le cae al rival. Pisarlos ya no hace nada y el bot no los busca.
+- [x] 12. Diana debajo de cada power-up, cartel "¡PEGALE CON LA PELOTA!" hasta ganar el
+  primero (se recuerda), y se rompen al pegarles. Golpes más fuertes (con limitador) y
+  música/hinchada más bajas; todos los volúmenes en `AUDIO` de `src/config.js`.
 
 ## Ideas para después
 - Controles táctiles para celular.
