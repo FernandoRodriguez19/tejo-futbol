@@ -54,7 +54,7 @@ export const HAZARDS = {
   maxOnField: 2,
   radius: 24,
   freezeTime: 5000, // ms frozen
-  freezeSpeed: 0.3, // speed multiplier while frozen
+  freezeSpeed: 0, // speed multiplier while frozen (0 = can't move at all)
   soapTime: 6000, // ms slippery
   soapGrip: 1.2, // how fast you can change direction on soap (lower = slipperier)
   throwTime: 350, // ms the item takes to fly to the rival

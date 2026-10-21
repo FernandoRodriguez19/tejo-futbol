@@ -810,7 +810,7 @@ export default class GameScene extends Phaser.Scene {
     this.dashQueued.clear();
   }
 
-  // Ice: the player crawls at HAZARDS.freezeSpeed. Soap: the velocity only slowly
+  // Ice: the player moves at HAZARDS.freezeSpeed (0: stuck in place). Soap: the velocity only slowly
   // catches up with the input, so the player slides and overshoots. A dash ignores both.
   applyStatus(p, dt) {
     if (p.dashLeft > 0) {
