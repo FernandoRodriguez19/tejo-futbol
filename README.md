@@ -30,10 +30,12 @@ npm run dev
 ```
 Después abrí http://localhost:5173
 
-## Subir cambios a Vercel
-El proyecto ya está vinculado a Vercel (`tejo-futbol`). Para publicar una versión nueva:
+## Publicar cambios
+El repositorio está conectado a Vercel: **cada push a `main` se publica solo** en
+https://tejo-futbol.vercel.app (Vercel corre `npm run build` y sirve `dist`).
 ```bash
-npx vercel deploy --prod
+git add -A
+git commit -m "lo que cambiaste"
+git push
 ```
-Vercel detecta Vite solo (build: `npm run build`, carpeta: `dist`). Si en otra compu te
-pide iniciar sesión, corré antes `npx vercel login`.
+Las otras ramas generan una versión de prueba con su propio link, sin tocar la oficial.
