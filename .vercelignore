@@ -1,0 +1,5 @@
+node_modules
+dist
+.claude
+# Original recordings; the game uses the copies in public/audio.
+musica futbol tejo
