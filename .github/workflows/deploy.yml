@@ -1,0 +1,41 @@
+# Publishes the game on Vercel (https://tejo-futbol.vercel.app) on every push to main.
+# The Vercel project lives in another account than this repo, so instead of Vercel's
+# Git integration it deploys with the Vercel CLI and a token:
+#   secrets.VERCEL_TOKEN   token of the Vercel account that owns the project
+#   vars.VERCEL_ORG_ID     team id   (from .vercel/project.json)
+#   vars.VERCEL_PROJECT_ID project id (from .vercel/project.json)
+name: Publicar en Vercel
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: # also runnable by hand from the Actions tab
+
+concurrency:
+  group: vercel-production
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      VERCEL_ORG_ID: ${{ vars.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Instalar Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Traer la configuración del proyecto
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Compilar
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Publicar
+        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
