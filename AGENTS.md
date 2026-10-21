@@ -31,8 +31,9 @@ Juego de fútbol 1 vs 1 en cancha vertical (mezcla de Pong, Haxball y tejo) hech
 - `src/ui.js` — textos con contorno, la cinta violeta de los carteles y el botón de
   sonido (`soundButton`, también con la tecla M). El volumen general vive en `sound.js`
   (`getVolume`, `cycleVolume`) y `music.js` lo aplica a todo el audio grabado.
-- `src/scenes/MenuScene.js` — menú con tarjetas: liga, 1 vs 1 y vs bot (con la
-  dificultad adentro).
+- `src/scenes/MenuScene.js` — menú con dos secciones de tarjetas: Partido normal (vs IA,
+  vs amigo) y Campeonato (liga, copa próximamente). La dificultad y los power-ups se
+  eligen en la pantalla "antes de jugar" de `TeamSelectScene`.
 - `src/scenes/GameScene.js` — partido: movimiento, física de la pelota, goles, fin.
   En modo liga además: reloj de 90 s, pausa y guardado del resultado.
 - `src/scenes/TeamSelectScene.js` — elegir equipo para una liga nueva.

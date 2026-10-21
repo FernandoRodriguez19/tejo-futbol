@@ -151,6 +151,11 @@ pelota en el arco rival. La pelota nunca frena y con cada rebote se hace más r�
 - Transiciones con franjas diagonales entre pantallas.
 
 ## Pantallas
-1. Menú: elegir modo (1 vs 1 / contra bot) y la dificultad.
-2. Partido: marcador arriba.
-3. Fin: muestra quién ganó y deja jugar de nuevo o volver al menú.
+1. Menú con dos secciones:
+   - **Partido normal:** VS LA IA o VS AMIGO.
+   - **Campeonato:** LIGA y COPA (próximamente).
+2. Elegir equipos (uno en la liga, los dos en los partidos normales).
+3. "Antes de jugar": dificultad (contra la IA y en la liga) y power-ups sí/no. Recuerda la
+   última elección.
+4. Partido: marcador arriba.
+5. Fin: muestra quién ganó y deja jugar de nuevo o volver al menú.

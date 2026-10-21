@@ -125,7 +125,8 @@ export default class TeamSelectScene extends Phaser.Scene {
     if (difficulty) {
       rows.push({ key: 'difficulty', label: 'DIFICULTAD', values: LEAGUE_LEVELS, index: LEAGUE_LEVELS.findIndex((l) => l.id === difficulty) });
     }
-    rows.push({ key: 'hazards', label: 'HIELO Y JABÓN', values: [{ id: false, label: 'NO' }, { id: true, label: 'SÍ' }], index: 0 });
+    // Remembers the last choice for the next match.
+    rows.push({ key: 'hazards', label: 'POWER-UPS', values: [{ id: false, label: 'NO' }, { id: true, label: 'SÍ' }], index: this.registry.get('hazards') ? 1 : 0 });
 
     const top = 290;
     const height = 240 + rows.length * 90 + 110;
@@ -219,6 +220,9 @@ export default class TeamSelectScene extends Phaser.Scene {
     if (this.leaving) return;
     const settings = { difficulty: null, hazards: false };
     for (const row of this.setup.rows) settings[row.key] = row.values[row.index].id;
+    // Next time the screen starts with these same choices.
+    this.registry.set('hazards', settings.hazards);
+    if (settings.difficulty && this.purpose === 'friendly') this.registry.set('botLevel', settings.difficulty);
     sfx.kickoff();
     this.setup.onStart(settings);
   }
