@@ -36,6 +36,11 @@
   repetición del gol, ojitos, polvo y pasto, transiciones entre pantallas.
 - [x] 8f. Elegir equipos también en 1 vs 1 y contra el bot.
 - [x] 9. Publicar en Vercel: https://tejo-futbol.vercel.app
+- [x] 10. Menú con tarjetas e íconos (copa, jugadores, robot); la dificultad del bot se
+  elige dentro de su tarjeta (ajíes). Botón de sonido en todas las pantallas (o tecla M):
+  volumen alto → medio → mudo, y se recuerda.
+- [x] 11. Hielo y jabón se ganan con la pelota: cuando la pelota choca con uno, se lo lleva
+  el último que la tocó y le cae al rival. Pisarlos ya no hace nada y el bot no los busca.
 
 ## Ideas para después
 - Controles táctiles para celular.

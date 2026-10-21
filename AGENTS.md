@@ -26,8 +26,11 @@ Juego de fútbol 1 vs 1 en cancha vertical (mezcla de Pong, Haxball y tejo) hech
   `GameScene.updateChant()`; la música del menú, con `playMenuMusic()` de `src/ui.js`.
 - `src/art.js` — todos los gráficos (cancha, tribuna, jugadores, pelota, explosión),
   dibujados con Canvas 2D al iniciar; no hay archivos de imagen.
-- `src/ui.js` — textos con contorno y la cinta violeta de los carteles.
-- `src/scenes/MenuScene.js` — menú para elegir modo y dificultad.
+- `src/ui.js` — textos con contorno, la cinta violeta de los carteles y el botón de
+  sonido (`soundButton`, también con la tecla M). El volumen general vive en `sound.js`
+  (`getVolume`, `cycleVolume`) y `music.js` lo aplica a todo el audio grabado.
+- `src/scenes/MenuScene.js` — menú con tarjetas: liga, 1 vs 1 y vs bot (con la
+  dificultad adentro).
 - `src/scenes/GameScene.js` — partido: movimiento, física de la pelota, goles, fin.
   En modo liga además: reloj de 90 s, pausa y guardado del resultado.
 - `src/scenes/TeamSelectScene.js` — elegir equipo para una liga nueva.
@@ -39,8 +42,8 @@ Juego de fútbol 1 vs 1 en cancha vertical (mezcla de Pong, Haxball y tejo) hech
   flotantes y detección de tiros al arco.
 - `src/game/Particles.js` — partículas livianas (polvo, pasto, fuego) dibujadas en un Graphics.
 - `src/game/Replay.js` — graba los últimos segundos para la repetición del gol.
-- `src/game/Hazards.js` — power-ups opcionales (hielo y jabón): aparición, tiro al rival,
-  efectos y búsqueda del bot.
+- `src/game/Hazards.js` — power-ups opcionales (hielo y jabón): aparición, choque con la
+  pelota (se los lleva `ball.lastTouch`, el último que la tocó), tiro al rival y efectos.
 - `src/gamepads.js` — joystick (Gamepad API); `padMenu()` lo conecta a los menús.
 - `GameScene` usa dos cámaras: la principal (zoom/seguimiento) y una de UI fija. Todo
   objeto nuevo va al mundo salvo que se cree dentro de `this.asUI(() => ...)`.

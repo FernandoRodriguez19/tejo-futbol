@@ -5,7 +5,7 @@ import {
   KICKOFF_DELAY, COLORS, PALETTE, FONTS, BOT_LEVELS, DASH, HAZARDS,
 } from '../config.js';
 import { makeTextures, kitTexture, SPRITE_SCALE } from '../art.js';
-import { titleText, uiText, ribbon, goTo, wipeIn } from '../ui.js';
+import { titleText, uiText, ribbon, goTo, wipeIn, soundButton } from '../ui.js';
 import { sfx, unlockAudio } from '../sound.js';
 import {
   playChant, stopChant, pauseChant, resumeChant, stopLoop, pauseLoops, resumeLoops, playSound,
@@ -124,6 +124,8 @@ export default class GameScene extends Phaser.Scene {
     this.timeLeft = m ? MATCH_SECONDS * 1000 : null;
     this.paused = false;
     this.asUI(() => this.makeHud());
+    // Sound button in the bottom corner, above the pause screen so it works there too.
+    this.asUI(() => soundButton(this, GAME_W - 40, GAME_H - 38, 0.85).setDepth(25));
 
     // Juice state.
     this.fans = makeFans();
@@ -325,7 +327,8 @@ export default class GameScene extends Phaser.Scene {
       p.mvx = p.mvy = 0;
     }
     this.hazards?.reset(this.playTime);
-    Object.assign(this.ball, { x: CENTER_X, y: MID_Y, vx: 0, vy: 0 });
+    // lastTouch: the player who last kicked or touched the ball (power-ups go to them).
+    Object.assign(this.ball, { x: CENTER_X, y: MID_Y, vx: 0, vy: 0, lastTouch: null });
     this.trail.length = 0;
     this.replay.clear();
     this.rally = 0;
@@ -720,7 +723,7 @@ export default class GameScene extends Phaser.Scene {
 
     if (this.bot) {
       const { move, kick, dash } = this.bot.update(time);
-      this.applyInput(this.p2, this.steerBotToPowerUps(this.p2, move), time, { kickPressed: kick, kickHeld: kick });
+      this.applyInput(this.p2, move, time, { kickPressed: kick, kickHeld: kick });
       if (dash) this.dashQueued.add(this.p2);
     } else {
       const p2Keys = normalize(
@@ -739,10 +742,10 @@ export default class GameScene extends Phaser.Scene {
     for (const p of [this.p1, this.p2]) this.movePlayer(p, dt);
 
     if (this.state === 'playing') {
-      this.hazards?.update(this.playTime, [this.p1, this.p2]);
       for (const p of [this.p1, this.p2]) this.tryKick(p, time);
       this.stepBall(dt);
       if (this.state === 'playing') {
+        this.hazards?.update(this.playTime, this.ball, [this.p1, this.p2]);
         this.replay.record(time, this.ball, this.p1, this.p2);
         this.checkDrama();
       }
@@ -831,21 +834,6 @@ export default class GameScene extends Phaser.Scene {
     }
   }
 
-  // The bot goes for a power-up in its half, but only while the ball is in the other
-  // half and not coming back at it: defending always comes first.
-  steerBotToPowerUps(p, move) {
-    if (!this.hazards) return move;
-    const item = this.hazards.target(p);
-    const b = this.ball;
-    const ballAway = b.y > MID_Y + 60 && b.vy >= 0;
-    if (!item || !ballAway) return move;
-    const dx = item.x - p.x;
-    const dy = item.y - p.y;
-    const len = Math.hypot(dx, dy) || 1;
-    const speed = this.bot.cfg.speed;
-    return { x: (dx / len) * speed, y: (dy / len) * speed };
-  }
-
   applyInput(p, move, time, { kickPressed, kickHeld }) {
     p.vx = move.x * PLAYER_SPEED;
     p.vy = move.y * PLAYER_SPEED;
@@ -900,6 +888,7 @@ export default class GameScene extends Phaser.Scene {
     p.lastKick = time;
     p.armedUntil = 0;
     p.squash = 1;
+    b.lastTouch = p;
 
     const ratio = this.speedRatio();
     sfx.kick();
@@ -1024,6 +1013,7 @@ export default class GameScene extends Phaser.Scene {
       b.vx = rvx - 2 * dot * nx + p.vx;
       b.vy = rvy - 2 * dot * ny + p.vy;
       this.setBallSpeed(this.ballSpeed() * BALL.bodyDamp);
+      b.lastTouch = p;
       sfx.body();
       p.squash = Math.max(p.squash, 0.4 + 0.6 * preRatio);
       if (preRatio > 0.5) this.hitstop = Math.max(this.hitstop, 40);

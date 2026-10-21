@@ -1,6 +1,7 @@
 // Recorded audio (files in public/audio): the menu music loop, the match background
 // music (a rotation of tracks), crowd chants and one-shot sounds. The synthesized
 // effects live in sound.js.
+import { getVolume, onVolumeChange } from './sound.js';
 
 const BASE = import.meta.env.BASE_URL;
 const FILES = {
@@ -22,6 +23,25 @@ const DUCKED_BG = 0.12; // background volume while a chant is playing
 const CHANT_VOLUME = 0.5;
 const FADE_MS = 600;
 
+// Every sound keeps its own level (audio.level, 0..1) and plays at level × the master
+// volume, so the sound button can turn everything up or down at once.
+const live = new Set();
+
+function setLevel(audio, level) {
+  audio.level = level;
+  audio.volume = level * getVolume();
+}
+
+onVolumeChange(() => live.forEach((audio) => setLevel(audio, audio.level)));
+
+function newAudio(name, level) {
+  const audio = new Audio(FILES[name]);
+  setLevel(audio, level);
+  audio.addEventListener('play', () => live.add(audio));
+  audio.addEventListener('ended', () => live.delete(audio));
+  return audio;
+}
+
 // Browsers can refuse to play before the first click/key press; then the sound simply
 // stays quiet (loops are retried by calling startLoop again).
 const play = (audio) => audio.play().catch(() => {});
@@ -30,14 +50,14 @@ const play = (audio) => audio.play().catch(() => {});
 function fadeTo(audio, target, ms, onDone) {
   clearInterval(audio.fadeTimer);
   const steps = Math.max(1, Math.round(ms / 30));
-  const delta = (target - audio.volume) / steps;
+  const delta = (target - audio.level) / steps;
   let n = 0;
   audio.fadeTimer = setInterval(() => {
     n++;
-    audio.volume = Math.min(1, Math.max(0, audio.volume + delta));
+    setLevel(audio, Math.min(1, Math.max(0, audio.level + delta)));
     if (n >= steps) {
       clearInterval(audio.fadeTimer);
-      audio.volume = target;
+      setLevel(audio, target);
       onDone?.();
     }
   }, 30);
@@ -45,7 +65,10 @@ function fadeTo(audio, target, ms, onDone) {
 
 function fadeOutAndStop(audio, ms) {
   audio.stopping = true;
-  fadeTo(audio, 0, ms, () => audio.pause());
+  fadeTo(audio, 0, ms, () => {
+    audio.pause();
+    live.delete(audio);
+  });
 }
 
 // ---------- menu music (loop) ----------
@@ -59,9 +82,8 @@ export function startLoop(name) {
     if (existing.paused && !existing.stopping) play(existing);
     return;
   }
-  const audio = new Audio(FILES[name]);
+  const audio = newAudio(name, MENU_VOLUME);
   audio.loop = true;
-  audio.volume = MENU_VOLUME;
   loops[name] = audio;
   play(audio);
 }
@@ -85,8 +107,7 @@ function nextTrack(fadeMs) {
   const name = pick(MATCH_TRACKS.filter((n) => n !== bgName));
   const old = bg;
   if (old) fadeOutAndStop(old, fadeMs);
-  const audio = new Audio(FILES[name]);
-  audio.volume = 0;
+  const audio = newAudio(name, 0);
   audio.addEventListener('ended', () => {
     if (bg === audio) nextTrack(300);
   });
@@ -141,8 +162,7 @@ let fadingChant = null;
 // a stop, or couldn't play at all.
 export function playChant(name, onDone) {
   stopChant(150);
-  const audio = new Audio(FILES[name]);
-  audio.volume = CHANT_VOLUME;
+  const audio = newAudio(name, CHANT_VOLUME);
   let done = false;
   audio.finish = () => {
     if (done) return;
@@ -167,6 +187,7 @@ export function stopChant(fadeMs = FADE_MS) {
   if (fadingChant) {
     clearInterval(fadingChant.fadeTimer);
     fadingChant.pause();
+    live.delete(fadingChant);
   }
   const audio = chant;
   chant = null;
@@ -176,6 +197,7 @@ export function stopChant(fadeMs = FADE_MS) {
   audio.finish();
   fadeTo(audio, 0, fadeMs, () => {
     audio.pause();
+    live.delete(audio);
     if (fadingChant === audio) fadingChant = null;
   });
 }
@@ -193,8 +215,7 @@ export function resumeChant() {
 const ONE_SHOT_VOLUME = { goal: 0.8, ooh: 0.7 };
 
 export function playSound(name) {
-  const audio = new Audio(FILES[name]);
-  audio.volume = ONE_SHOT_VOLUME[name] ?? 0.7;
+  const audio = newAudio(name, ONE_SHOT_VOLUME[name] ?? 0.7);
   play(audio);
 }
 

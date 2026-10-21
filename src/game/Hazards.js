@@ -1,35 +1,42 @@
 // Optional power-ups: ice blocks and soap bars that pop up in either half of the pitch.
-// Whoever grabs one throws it at the rival: ice freezes them (very slow), soap makes
-// them slippery. Times are in "play time" ms (only advances while the ball is in play),
-// so pauses, goals and replays don't eat into them.
+// They're won with the ball: when it hits one, the player who touched it last (kick,
+// body or a bounce off the walls after that) throws it at the rival. Ice freezes them
+// (very slow), soap makes them slippery. Players walking over an item do nothing.
+// Times are in "play time" ms (only advances while the ball is in play), so pauses,
+// goals and replays don't eat into them.
 import * as Phaser from 'phaser';
-import { FIELD, MID_Y, PLAYER_R, HAZARDS, PALETTE } from '../config.js';
+import { FIELD, MID_Y, BALL_R, HAZARDS, PALETTE } from '../config.js';
 import { SPRITE_SCALE } from '../art.js';
 import { floatText } from './juice.js';
 import { sfx } from '../sound.js';
 
 const MARGIN = 60; // keep items away from the walls and the halfway line
-const SEEK_RANGE = 320; // the bot goes for items this close to it
 
 export default class Hazards {
   constructor(scene) {
     this.scene = scene;
     this.items = [];
     this.nextSpawn = 0;
+    this.lastBall = null;
   }
 
   // Clears the pitch and schedules the next item (called at every kickoff).
   reset(playTime) {
     for (const item of this.items) item.sprite.destroy();
     this.items = [];
+    this.lastBall = null;
     this.nextSpawn = playTime + Phaser.Math.Between(HAZARDS.spawnMin, HAZARDS.spawnMax);
   }
 
-  update(playTime, players) {
+  update(playTime, ball, players) {
     if (playTime >= this.nextSpawn) {
-      if (this.items.length < HAZARDS.maxOnField) this.spawn(playTime, players);
+      if (this.items.length < HAZARDS.maxOnField) this.spawn(playTime, [...players, ball]);
       this.nextSpawn = playTime + Phaser.Math.Between(HAZARDS.spawnMin, HAZARDS.spawnMax);
     }
+    // The ball can move further than an item in one frame, so check the whole path
+    // it travelled since the last frame.
+    const from = this.lastBall ?? { x: ball.x, y: ball.y };
+    this.lastBall = { x: ball.x, y: ball.y };
 
     for (const item of [...this.items]) {
       const left = item.until - playTime;
@@ -40,12 +47,16 @@ export default class Hazards {
       // Blink during the last second and a half so players see it's about to go.
       item.sprite.setAlpha(left < 1500 ? 0.45 + 0.55 * Math.abs(Math.sin(playTime / 90)) : 1);
 
-      const picker = players.find((p) => Math.hypot(p.x - item.x, p.y - item.y) < PLAYER_R + HAZARDS.radius * 0.8);
-      if (picker) this.grab(item, picker, players.find((p) => p !== picker));
+      // Nobody owns the ball right after a kickoff: it just rolls over the item.
+      const owner = ball.lastTouch;
+      if (owner && distToSegment(item, from, ball) < BALL_R + HAZARDS.radius * 0.8) {
+        this.grab(item, owner, players.find((p) => p !== owner));
+      }
     }
   }
 
-  spawn(playTime, players) {
+  // `avoid`: players and the ball, so items don't pop up right on top of them.
+  spawn(playTime, avoid) {
     const top = Math.random() < 0.5;
     const yMin = top ? FIELD.top + MARGIN : MID_Y + MARGIN;
     const yMax = top ? MID_Y - MARGIN : FIELD.bottom - MARGIN;
@@ -53,7 +64,7 @@ export default class Hazards {
     for (let tries = 0; tries < 20; tries++) {
       const x = Phaser.Math.Between(FIELD.left + MARGIN, FIELD.right - MARGIN);
       const y = Phaser.Math.Between(yMin, yMax);
-      const crowded = [...players, ...this.items].some((o) => Math.hypot(o.x - x, o.y - y) < 110);
+      const crowded = [...avoid, ...this.items].some((o) => Math.hypot(o.x - x, o.y - y) < 110);
       if (crowded) continue;
 
       const type = Math.random() < 0.5 ? 'ice' : 'soap';
@@ -77,14 +88,14 @@ export default class Hazards {
     this.scene.tweens.add({ targets: sprite, scale: 0, alpha: 0, duration: 200, onComplete: () => sprite.destroy() });
   }
 
-  // The picker throws the item at the rival: it spins across the pitch and the effect
-  // lands when it arrives.
-  grab(item, picker, rival) {
+  // The ball hit the item: it flies from there at the rival of whoever touched the ball
+  // last, spinning across the pitch, and the effect lands when it arrives.
+  grab(item, owner, rival) {
     this.remove(item, true);
     const s = this.scene;
-    picker.squash = 0.6;
+    owner.squash = 0.6;
     sfx.spawn();
-    floatText(s, picker.x, picker.y - 50, item.type === 'ice' ? '¡TOMÁ HIELO!' : '¡TOMÁ JABÓN!', PALETTE.white, 22);
+    floatText(s, item.x, item.y - 40, item.type === 'ice' ? '¡TOMÁ HIELO!' : '¡TOMÁ JABÓN!', PALETTE.white, 22);
 
     const shot = s.add.image(item.x, item.y, item.type).setDepth(6).setScale(SPRITE_SCALE * 1.1);
     const flight = { t: 0 };
@@ -128,23 +139,17 @@ export default class Hazards {
     }
   }
 
-  // The closest item the bot can reach (in its own half and not too far), or null.
-  target(p) {
-    let best = null;
-    let bestDist = SEEK_RANGE;
-    for (const item of this.items) {
-      const ownHalf = p.side === 'top' ? item.y < MID_Y : item.y > MID_Y;
-      const d = Math.hypot(p.x - item.x, p.y - item.y);
-      if (ownHalf && d < bestDist) {
-        best = item;
-        bestDist = d;
-      }
-    }
-    return best;
-  }
-
   destroy() {
     for (const item of this.items) item.sprite.destroy();
     this.items = [];
   }
+}
+
+// Distance from point p to the segment a-b.
+function distToSegment(p, a, b) {
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const len2 = dx * dx + dy * dy;
+  const t = len2 ? Phaser.Math.Clamp(((p.x - a.x) * dx + (p.y - a.y) * dy) / len2, 0, 1) : 0;
+  return Math.hypot(p.x - (a.x + dx * t), p.y - (a.y + dy * t));
 }

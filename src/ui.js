@@ -2,7 +2,7 @@
 // the striped wipe used between screens.
 import { COLORS, PALETTE, FONTS, GAME_W, GAME_H } from './config.js';
 import { startLoop } from './music.js';
-import { unlockAudio } from './sound.js';
+import { unlockAudio, sfx, getVolume, cycleVolume, onVolumeChange } from './sound.js';
 
 // Menu screens share one music loop that keeps going between them. Browsers only allow
 // audio after a key press or click, so it's retried on the first one.
@@ -116,6 +116,78 @@ export function button(scene, x, y, w, h, label, onClick, fontSize = 26) {
   };
   setActive(false);
   return { container, zone, setActive };
+}
+
+// Round speaker button: each click (or the M key) cycles full → half → muted. The icon
+// shows the sound waves left, or a red cross when muted.
+export function soundButton(scene, x, y, scale = 1) {
+  const r = 30;
+  const g = scene.add.graphics();
+  const container = scene.add.container(x, y, [g]).setScale(scale);
+
+  const draw = () => {
+    const level = getVolume();
+    g.clear();
+    g.fillStyle(COLORS.ink, 1);
+    g.fillCircle(0, 5, r);
+    g.fillStyle(level ? COLORS.purple : COLORS.purpleDark, 1);
+    g.fillCircle(0, 0, r);
+    g.fillStyle(0xffffff, 0.22);
+    g.fillEllipse(0, -r * 0.45, r * 1.3, r * 0.6);
+    g.lineStyle(4, COLORS.ink, 1);
+    g.strokeCircle(0, 0, r);
+
+    // Speaker: box + cone.
+    const speaker = [
+      { x: -16, y: -6 }, { x: -8, y: -6 }, { x: 2, y: -15 },
+      { x: 2, y: 15 }, { x: -8, y: 6 }, { x: -16, y: 6 },
+    ];
+    g.fillStyle(0xffffff, 1);
+    g.fillPoints(speaker, true);
+    g.lineStyle(3, COLORS.ink, 1);
+    g.strokePoints(speaker, true);
+
+    if (level === 0) {
+      for (const [w, color] of [[8, COLORS.ink], [4, COLORS.p2]]) {
+        g.lineStyle(w, color, 1);
+        g.lineBetween(7, -7, 19, 7);
+        g.lineBetween(7, 7, 19, -7);
+      }
+      return;
+    }
+    const waves = level >= 1 ? 2 : 1;
+    for (let i = 0; i < waves; i++) {
+      for (const [w, color] of [[7, COLORS.ink], [3, 0xffffff]]) {
+        g.lineStyle(w, color, 1);
+        g.beginPath();
+        g.arc(2, 0, 9 + i * 8, -0.85, 0.85);
+        g.strokePath();
+      }
+    }
+  };
+
+  const toggle = () => {
+    unlockAudio();
+    cycleVolume();
+    sfx.select();
+    scene.tweens.add({ targets: container, scale: { from: scale * 1.25, to: scale }, duration: 220, ease: 'Back.Out' });
+  };
+
+  const zone = scene.add.zone(0, 0, r * 2 + 10, r * 2 + 10).setInteractive({ useHandCursor: true });
+  container.add(zone);
+  // Stop the click from also counting as a click on whatever is behind the button.
+  zone.on('pointerdown', (pointer, lx, ly, event) => {
+    event.stopPropagation();
+    toggle();
+  });
+  zone.on('pointerover', () => container.setScale(scale * 1.1));
+  zone.on('pointerout', () => container.setScale(scale));
+  scene.input.keyboard.on('keydown-M', toggle);
+
+  const stop = onVolumeChange(draw);
+  scene.events.once('shutdown', stop);
+  draw();
+  return container;
 }
 
 // A purple ribbon with notched tails, like a sports title card. Returns a container

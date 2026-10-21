@@ -2,6 +2,45 @@
 
 let ctx = null;
 
+// ---------- master volume (shared with music.js) ----------
+
+// The sound button cycles through these levels; the choice is remembered.
+export const VOLUME_STEPS = [1, 0.5, 0];
+const VOLUME_KEY = 'tejo-futbol-volume';
+let master = loadVolume();
+const volumeListeners = new Set();
+
+function loadVolume() {
+  try {
+    const saved = localStorage.getItem(VOLUME_KEY);
+    return saved !== null && VOLUME_STEPS.includes(Number(saved)) ? Number(saved) : 1;
+  } catch {
+    return 1;
+  }
+}
+
+export function getVolume() {
+  return master;
+}
+
+export function cycleVolume() {
+  const i = VOLUME_STEPS.indexOf(master);
+  master = VOLUME_STEPS[(i + 1) % VOLUME_STEPS.length];
+  try {
+    localStorage.setItem(VOLUME_KEY, String(master));
+  } catch {
+    // Private mode: the level just isn't remembered.
+  }
+  volumeListeners.forEach((fn) => fn(master));
+  return master;
+}
+
+// Calls fn(volume) on every change. Returns a function that stops listening.
+export function onVolumeChange(fn) {
+  volumeListeners.add(fn);
+  return () => volumeListeners.delete(fn);
+}
+
 // Browsers only allow audio after a user gesture; call this from a key/click handler.
 export function unlockAudio() {
   if (!ctx) {
@@ -13,7 +52,8 @@ export function unlockAudio() {
 }
 
 function tone(freq, duration, { type = 'square', volume = 0.12, slideTo = null, delay = 0 } = {}) {
-  if (!ctx || ctx.state !== 'running') return;
+  if (!ctx || ctx.state !== 'running' || master === 0) return;
+  volume *= master;
   const start = ctx.currentTime + delay;
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();

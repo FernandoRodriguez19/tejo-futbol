@@ -23,6 +23,8 @@ export function makeTextures(scene) {
   canvasTexture(tex, 'p1', pSize, pSize, (ctx) => drawPlayer(ctx, pSize, { pattern: 'solid', colors: [C.p1] }, '10'));
   canvasTexture(tex, 'p2', pSize, pSize, (ctx) => drawPlayer(ctx, pSize, { pattern: 'solid', colors: [C.p2] }, '9'));
   canvasTexture(tex, 'trophy', 240, 300, drawTrophy);
+  canvasTexture(tex, 'robot', 160, 160, drawRobot);
+  canvasTexture(tex, 'chili', 56, 72, drawChili);
   canvasTexture(tex, 'ice', 64 * S, 64 * S, (ctx) => drawIce(ctx, 64 * S));
   canvasTexture(tex, 'soap', 64 * S, 64 * S, (ctx) => drawSoap(ctx, 64 * S));
 
@@ -463,6 +465,117 @@ function drawSoap(ctx, size) {
     ctx.fillStyle = '#ffffff';
     ctx.fill();
   }
+}
+
+// Robot head for the "VS BOT" menu card.
+function drawRobot(ctx, w) {
+  const cx = w / 2;
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = C.ink;
+
+  // Antenna.
+  ctx.lineWidth = 7;
+  ctx.beginPath();
+  ctx.moveTo(cx, 44);
+  ctx.lineTo(cx, 18);
+  ctx.stroke();
+  circle(ctx, cx, 16, 11);
+  ctx.fillStyle = C.pink;
+  ctx.fill();
+  ctx.lineWidth = 5;
+  ctx.stroke();
+
+  // Ears.
+  for (const side of [-1, 1]) {
+    roundRect(ctx, cx + side * 62 - 10, 74, 20, 36, 6);
+    ctx.fillStyle = C.purple;
+    ctx.fill();
+    ctx.stroke();
+  }
+
+  // Head.
+  const metal = ctx.createLinearGradient(0, 40, 0, 150);
+  metal.addColorStop(0, '#e3ebff');
+  metal.addColorStop(1, '#93a6dc');
+  roundRect(ctx, cx - 54, 40, 108, 104, 24);
+  ctx.fillStyle = metal;
+  ctx.fill();
+  ctx.lineWidth = 7;
+  ctx.stroke();
+
+  // Visor with glowing eyes.
+  roundRect(ctx, cx - 40, 58, 80, 42, 16);
+  ctx.fillStyle = C.ink;
+  ctx.fill();
+  for (const side of [-1, 1]) {
+    circle(ctx, cx + side * 19, 79, 10);
+    ctx.fillStyle = C.cyan;
+    ctx.fill();
+    circle(ctx, cx + side * 19 - 3, 75, 3.5);
+    ctx.fillStyle = C.white;
+    ctx.fill();
+  }
+
+  // Grill mouth.
+  roundRect(ctx, cx - 24, 112, 48, 18, 6);
+  ctx.fillStyle = C.white;
+  ctx.fill();
+  ctx.lineWidth = 5;
+  ctx.stroke();
+  ctx.lineWidth = 3;
+  for (const dx of [-8, 8]) {
+    ctx.beginPath();
+    ctx.moveTo(cx + dx, 114);
+    ctx.lineTo(cx + dx, 128);
+    ctx.stroke();
+  }
+
+  // Shine.
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+  ctx.beginPath();
+  ctx.ellipse(cx - 34, 52, 10, 5, -0.4, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+// Little chili pepper: the bot difficulty is shown as 1, 2 or 3 of them.
+function drawChili(ctx, w, h) {
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = C.ink;
+
+  // Body, curving down to the tip.
+  ctx.beginPath();
+  ctx.moveTo(w * 0.4, h * 0.3);
+  ctx.bezierCurveTo(w * 0.08, h * 0.38, w * 0.06, h * 0.78, w * 0.26, h * 0.94);
+  ctx.bezierCurveTo(w * 0.42, h * 0.86, w * 0.86, h * 0.64, w * 0.74, h * 0.3);
+  ctx.closePath();
+  ctx.fillStyle = '#ff3b30';
+  ctx.fill();
+  ctx.lineWidth = 6;
+  ctx.stroke();
+
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
+  ctx.beginPath();
+  ctx.ellipse(w * 0.36, h * 0.5, w * 0.06, h * 0.13, 0.3, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Stem and cap.
+  for (const [width, color] of [[11, C.ink], [5, '#3dd68c']]) {
+    ctx.lineWidth = width;
+    ctx.strokeStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(w * 0.56, h * 0.3);
+    ctx.quadraticCurveTo(w * 0.56, h * 0.12, w * 0.76, h * 0.07);
+    ctx.stroke();
+  }
+  ctx.beginPath();
+  ctx.ellipse(w * 0.57, h * 0.3, w * 0.2, h * 0.07, 0, 0, Math.PI * 2);
+  ctx.fillStyle = '#3dd68c';
+  ctx.fill();
+  ctx.strokeStyle = C.ink;
+  ctx.lineWidth = 5;
+  ctx.stroke();
 }
 
 function drawTrophy(ctx, w, h) {

@@ -1,7 +1,7 @@
 import * as Phaser from 'phaser';
 import { GAME_W, GAME_H, COLORS, PALETTE, FONTS } from '../config.js';
 import { makeTextures, kitTexture } from '../art.js';
-import { titleText, uiText, ribbon, button, goTo, wipeIn, playMenuMusic } from '../ui.js';
+import { titleText, uiText, ribbon, button, goTo, wipeIn, playMenuMusic, soundButton } from '../ui.js';
 import { sfx, unlockAudio } from '../sound.js';
 import { TEAM_BY_ID, pickKits } from '../league/teams.js';
 import {
@@ -50,6 +50,7 @@ export default class LeagueScene extends Phaser.Scene {
     if (finished && this.view === 'results') this.view = 'final';
 
     this.drawHeader();
+    soundButton(this, GAME_W - 48, 48);
     this.drawFooter();
     this.render();
 

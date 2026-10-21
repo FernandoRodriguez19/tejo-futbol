@@ -1,7 +1,7 @@
 import * as Phaser from 'phaser';
 import { GAME_W, GAME_H, COLORS, PALETTE } from '../config.js';
 import { makeTextures, kitTexture } from '../art.js';
-import { titleText, uiText, button, goTo, wipeIn, playMenuMusic } from '../ui.js';
+import { titleText, uiText, button, goTo, wipeIn, playMenuMusic, soundButton } from '../ui.js';
 import { sfx, unlockAudio } from '../sound.js';
 import { TEAMS, pickKits } from '../league/teams.js';
 import { newLeague, saveLeague } from '../league/league.js';
@@ -42,6 +42,7 @@ export default class TeamSelectScene extends Phaser.Scene {
 
     this.titleTxt = titleText(this, GAME_W / 2, 80, '', 54).setAngle(-3);
     this.subTxt = uiText(this, GAME_W / 2, 150, '', 20, PALETTE.yellow);
+    soundButton(this, GAME_W - 48, 48);
 
     const left = GAME_W / 2 - ((CELL_W + GAP) * COLS - GAP) / 2 + CELL_W / 2;
     this.cells = TEAMS.map((team, i) => {
@@ -155,7 +156,7 @@ export default class TeamSelectScene extends Phaser.Scene {
       parts.push(row.btn.container, row.btn.zone);
     });
     const hazardsY = top + 250 + (rows.length - 1) * 90;
-    parts.push(uiText(this, cx, hazardsY + 48, 'Agarrá el hielo o el jabón para congelar o hacer patinar al rival', 15, PALETTE.cyan));
+    parts.push(uiText(this, cx, hazardsY + 48, 'Pegale con la pelota al hielo o al jabón para congelar o hacer patinar al rival', 15, PALETTE.cyan));
 
     const playY = top + height - 60;
     const play = button(this, cx, playY, 340, 70, '¡A JUGAR!', () => this.startSetup(), 30);

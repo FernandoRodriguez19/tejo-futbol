@@ -67,12 +67,14 @@ pelota en el arco rival. La pelota nunca frena y con cada rebote se hace más r�
   contra el bot, y al crear la liga, junto con la dificultad).
 - Cada 6 a 12 segundos de juego aparece en una mitad al azar un **cubo de hielo** o un
   **jabón** (máximo 2 a la vez). Dura 9 segundos y titila antes de desaparecer.
-- Son **power-ups contra el rival**: quien agarra uno se lo tira al otro (vuela girando
-  hasta él).
+- Son **power-ups contra el rival** y se ganan **con la pelota**: cuando la pelota choca
+  con uno, se lo lleva el último que tocó la pelota (con una patada o con el cuerpo,
+  aunque después haya rebotado en las paredes) y sale volando girando hacia el otro
+  jugador. Pasar caminando por encima no hace nada. Justo después de un saque, antes de
+  que alguien toque la pelota, la pelota pasa por encima sin activarlo.
 - **Hielo:** el rival queda congelado 5 s: se mueve al 30% y no puede usar el dash.
 - **Jabón:** el rival patina 6 s con muy poco agarre: le cuesta mucho frenar y doblar.
-- El bot va a buscar los que caen en su mitad cuando la pelota está lejos de su arco.
-  Se borran en cada saque.
+- Se borran en cada saque.
 
 ## Controles
 | Acción | Jugador 1 (abajo) | Jugador 2 (arriba) |
