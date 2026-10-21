@@ -1,6 +1,7 @@
 import * as Phaser from 'phaser';
 import { GAME_W, GAME_H, COLORS, PALETTE, FONTS } from '../config.js';
-import { makeTextures, kitTexture } from '../art.js';
+import { makeTextures } from '../art.js';
+import { flagTexture } from '../cup/flags.js';
 import { titleText, uiText, ribbon, button, goTo, wipeIn, playMenuMusic, soundButton } from '../ui.js';
 import { sfx, unlockAudio } from '../sound.js';
 import { pickKits } from '../league/teams.js';
@@ -34,7 +35,7 @@ export default class CupScene extends Phaser.Scene {
     playMenuMusic(this);
     this.cup = loadCup();
     if (!this.cup) {
-      this.scene.start('TeamSelect', { purpose: 'cup' });
+      this.scene.start('NationSelect');
       return;
     }
     this.user = NATION_BY_ID[this.cup.userId];
@@ -104,15 +105,14 @@ export default class CupScene extends Phaser.Scene {
     if (m) {
       const home = NATION_BY_ID[m.home];
       const away = NATION_BY_ID[m.away];
-      const kits = pickKits(home, away);
       const rowY = 940;
       const label = m.knockout ? `PRÓXIMO PARTIDO · ${roundName(currentRound(c).length * 2)} · SI EMPATAN, GOL DE ORO` : 'PRÓXIMO PARTIDO';
       uiText(this, CX, 898, label, 17, PALETTE.yellow);
-      this.add.image(CX - 250, rowY, kitTexture(this, kits.home, '10')).setScale(0.38);
-      uiText(this, CX - 220, rowY, home.short, 22).setOrigin(0, 0.5);
+      this.add.image(CX - 268, rowY, flagTexture(this, home.id)).setScale(0.24);
+      uiText(this, CX - 222, rowY, home.short, 22).setOrigin(0, 0.5);
       uiText(this, CX, rowY, 'VS', 22, PALETTE.yellow);
-      uiText(this, CX + 220, rowY, away.short, 22).setOrigin(1, 0.5);
-      this.add.image(CX + 250, rowY, kitTexture(this, kits.away, '9')).setScale(0.38);
+      uiText(this, CX + 222, rowY, away.short, 22).setOrigin(1, 0.5);
+      this.add.image(CX + 268, rowY, flagTexture(this, away.id)).setScale(0.24);
     } else if (c.eliminated && !isFinished(c)) {
       uiText(this, CX, 920, 'La copa sigue sin vos: simulá el resto para ver quién sale campeón', 17, PALETTE.yellow);
     }
@@ -249,8 +249,8 @@ export default class CupScene extends Phaser.Scene {
         }
         const isUser = r.id === c.userId;
         const color = isUser ? PALETTE.yellow : PALETTE.white;
-        this.add2(this.add.image(x + 26, ry, kitTexture(this, nation.home, '')).setScale(big ? 0.22 : 0.16));
-        this.add2(this.add.text(x + 44, ry, nation.short, {
+        this.add2(this.add.image(x + (big ? 36 : 30), ry, flagTexture(this, nation.id)).setScale(big ? 0.16 : 0.12));
+        this.add2(this.add.text(x + (big ? 64 : 54), ry, nation.short, {
           fontFamily: FONTS.ui, fontStyle: '900', fontSize: `${fontSize}px`, color,
         }).setOrigin(0, 0.5));
         const dg = r.dg > 0 ? `+${r.dg}` : `${r.dg}`;
@@ -319,15 +319,16 @@ export default class CupScene extends Phaser.Scene {
       });
       const na = NATION_BY_ID[m.a];
       const nb = NATION_BY_ID[m.b];
-      const kitScale = cols === 2 ? 0.17 : 0.24;
-      this.add2(this.add.image(x + 18, cy, kitTexture(this, na.home, '')).setScale(kitScale));
+      const flagScale = cols === 2 ? 0.11 : 0.16;
+      const flagX = cols === 2 ? 24 : 34;
+      this.add2(this.add.image(x + flagX, cy, flagTexture(this, na.id)).setScale(flagScale));
       this.add2(this.add.text(mid - (cols === 2 ? 34 : 56), cy, na.short, style(m.winner === m.a)).setOrigin(1, 0.5));
       const score = m.ag === null || m.ag === undefined ? 'vs' : `${m.ag} - ${m.bg}${m.pens ? '*' : ''}`;
       this.add2(this.add.text(mid, cy, score, {
         fontFamily: FONTS.title, fontSize: `${fontSize + 2}px`, color,
       }).setOrigin(0.5));
       this.add2(this.add.text(mid + (cols === 2 ? 34 : 56), cy, nb.short, style(m.winner === m.b)).setOrigin(0, 0.5));
-      this.add2(this.add.image(x + colW - 18, cy, kitTexture(this, nb.home, '')).setScale(kitScale));
+      this.add2(this.add.image(x + colW - flagX, cy, flagTexture(this, nb.id)).setScale(flagScale));
     });
     if (list.some((m) => m.pens)) this.add2(uiText(this, CX, BODY_BOTTOM + 8, '* ganó por penales', 15, '#bfb3ff'));
   }
@@ -339,7 +340,7 @@ export default class CupScene extends Phaser.Scene {
     const burst = this.add2(this.add.image(CX, 390, 'burst').setScale(3.2).setAlpha(won ? 1 : 0.35));
     this.tweens.add({ targets: burst, angle: 360, duration: 16000, repeat: -1 });
     this.add2(this.add.image(CX, 390, 'trophy').setScale(0.95));
-    this.add2(this.add.image(CX + 105, 440, kitTexture(this, champion.home, '10')).setScale(0.75));
+    this.add2(this.add.image(CX + 120, 455, flagTexture(this, champion.id)).setScale(0.42).setAngle(8));
 
     if (won) {
       this.add2(titleText(this, CX, 630, '¡CAMPEÓN!', 100).setAngle(-5));
@@ -432,6 +433,6 @@ export default class CupScene extends Phaser.Scene {
   confirmReset() {
     clearCup();
     sfx.kickoff();
-    goTo(this, 'TeamSelect', { purpose: 'cup' });
+    goTo(this, 'NationSelect');
   }
 }

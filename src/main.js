@@ -5,6 +5,7 @@ import GameScene from './scenes/GameScene.js';
 import TeamSelectScene from './scenes/TeamSelectScene.js';
 import LeagueScene from './scenes/LeagueScene.js';
 import CupScene from './scenes/CupScene.js';
+import NationSelectScene from './scenes/NationSelectScene.js';
 
 // Phaser draws text and textures onto canvases, so the web fonts must be ready first.
 // If they can't load (offline), start anyway with the fallback fonts.
@@ -31,7 +32,7 @@ function startGame() {
       mode: Phaser.Scale.FIT,
       autoCenter: Phaser.Scale.CENTER_BOTH,
     },
-    scene: [MenuScene, GameScene, TeamSelectScene, LeagueScene, CupScene],
+    scene: [MenuScene, GameScene, TeamSelectScene, LeagueScene, CupScene, NationSelectScene],
   });
 
   // Handy for poking at the game from the browser console while developing.

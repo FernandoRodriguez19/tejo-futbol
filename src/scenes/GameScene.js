@@ -320,6 +320,8 @@ export default class GameScene extends Phaser.Scene {
 
   // Resets the field and launches the ball from the centre toward `receiver`.
   // The first kickoff of a match gets a full "3, 2, 1, ¡YA!" countdown.
+  // Both players start every kickoff (the first one and after each goal) with a full
+  // dash bar.
   kickoff(receiver, countdown = false) {
     this.state = 'kickoff';
     for (const p of [this.p1, this.p2]) {
@@ -329,6 +331,7 @@ export default class GameScene extends Phaser.Scene {
       p.mood = 'normal';
       p.moodUntil = 0;
       p.dashLeft = 0;
+      p.dash = 1;
       p.frozenUntil = p.slipUntil = 0;
       p.mvx = p.mvy = 0;
     }

@@ -185,7 +185,7 @@ export default class MenuScene extends Phaser.Scene {
     // The league picks up where you left off, or starts by choosing a team. Friendlies
     // start by choosing both teams; difficulty and power-ups come right after.
     if (key === 'league') goTo(this, loadLeague() ? 'League' : 'TeamSelect', {});
-    else if (key === 'cup') goTo(this, loadCup() ? 'Cup' : 'TeamSelect', loadCup() ? {} : { purpose: 'cup' });
+    else if (key === 'cup') goTo(this, loadCup() ? 'Cup' : 'NationSelect', {});
     else if (key === 'pvp') goTo(this, 'TeamSelect', { purpose: 'friendly', mode: 'pvp' });
     else goTo(this, 'TeamSelect', { purpose: 'friendly', mode: 'bot', level: this.registry.get('botLevel') ?? 'medium' });
   }

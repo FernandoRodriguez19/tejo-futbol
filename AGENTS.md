@@ -33,13 +33,16 @@ Juego de fútbol 1 vs 1 en cancha vertical (mezcla de Pong, Haxball y tejo) hech
   (`getVolume`, `cycleVolume`) y `music.js` lo aplica a todo el audio grabado.
 - `src/scenes/MenuScene.js` — menú con dos secciones de tarjetas: Partido normal (vs IA,
   vs amigo) y Campeonato (liga, copa). La dificultad y los power-ups se
-  eligen en la pantalla "antes de jugar" de `TeamSelectScene`.
+  eligen en la pantalla "antes de jugar" (`src/setupPanel.js`, clase `SetupPanel`,
+  usada por `TeamSelectScene` y `NationSelectScene`).
 - `src/scenes/GameScene.js` — partido: movimiento, física de la pelota, goles, fin.
   En modo liga además: reloj de 90 s, pausa y guardado del resultado.
-- `src/scenes/TeamSelectScene.js` — elegir equipo para una liga nueva.
+- `src/scenes/TeamSelectScene.js` — elegir club para una liga nueva o un amistoso.
+- `src/scenes/NationSelectScene.js` — selector de selección estilo FIFA para una copa nueva.
 - `src/scenes/LeagueScene.js` — tabla, resultados de la fecha, próximo partido y campeón.
 - `src/scenes/CupScene.js` — copa: grupos, llaves, resultados, próximo partido y campeón.
-- `src/cup/nations.js` — las 48 selecciones (colores, fuerza).
+- `src/cup/nations.js` — las 48 selecciones (colores, fuerza, confederación, Mundiales).
+- `src/cup/flags.js` — banderas de las 48 dibujadas con Canvas 2D (`flagTexture`).
 - `src/cup/cup.js` — copa: sorteo de grupos, mejores terceros, llaves, simulación
   (penales), guardado en localStorage.
 - Partidos de torneo: `GameScene` recibe `data.match` con `record(userGoals, rivalGoals)`

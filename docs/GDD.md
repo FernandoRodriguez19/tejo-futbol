@@ -53,9 +53,10 @@ pelota en el arco rival. La pelota nunca frena y con cada rebote se hace más r�
   *centro del jugador → pelota*, con un empujón fuerte. Hay una espera corta entre patadas.
 
 ## Dash
-- Cada jugador tiene una barra de dash que se llena en **30 segundos** de juego (no carga
-  durante los festejos ni las repeticiones). Se ve abajo del marcador y como un anillo
-  alrededor del jugador (amarillo cuando está lista).
+- Cada jugador arranca el partido **con el dash cargado**, y en cada saque después de un
+  gol se vuelve a llenar. Una vez usado, la barra tarda **30 segundos** de juego en
+  llenarse (no carga durante los festejos ni las repeticiones). Se ve abajo del marcador y
+  como un anillo alrededor del jugador (amarillo cuando está lista).
 - Con la barra llena y moviéndote, el dash te impulsa unos 200 px en la dirección en que
   vas: sirve para volver a defender o subir a atacar, pero no cruza la cancha (y nunca
   te deja pasar a la mitad rival).
@@ -67,7 +68,11 @@ pelota en el arco rival. La pelota nunca frena y con cada rebote se hace más r�
 ## Copa de naciones
 - 48 selecciones elegidas por historia y presente, repartidas como un Mundial de 48:
   16 de Europa, 8 de Sudamérica, 6 de Norte y Centroamérica, 9 de África, 8 de Asia y
-  1 de Oceanía. Colores reales (Croacia con cuadros); cada una tiene su fuerza.
+  1 de Oceanía. Colores reales (Croacia con cuadros); cada una tiene su fuerza y su
+  bandera (dibujada en el juego).
+- Selector estilo FIFA: pestañas por confederación, una tarjeta grande con la bandera,
+  la camiseta, el nivel, las estrellas y las Copas del Mundo ganadas, y abajo la tira de
+  banderas de esa confederación. ← → recorre las 48, ↑ ↓ cambia de confederación.
 - Después de elegir la selección, en "antes de jugar":
   - **Formato:** fase de grupos o eliminación directa.
   - **Equipos:** con grupos 48 (12 grupos), 32, 16 u 8 (2 grupos); en eliminación

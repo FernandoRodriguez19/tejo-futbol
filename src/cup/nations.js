@@ -62,10 +62,29 @@ const RAW = [
   ['nzelanda', 'Nueva Zelanda', 'N. ZELANDA', 0.34, 'trim', '#ffffff', '#1d1d1d'],
 ];
 
+// Confederations, in the order the selector shows them.
+export const CONFEDERATIONS = [
+  { id: 'conmebol', label: 'SUDAMÉRICA', ids: ['argentina', 'brasil', 'uruguay', 'colombia', 'ecuador', 'paraguay', 'chile', 'peru'] },
+  {
+    id: 'uefa', label: 'EUROPA',
+    ids: ['francia', 'espana', 'alemania', 'inglaterra', 'italia', 'portugal', 'paisesbajos', 'croacia',
+      'belgica', 'suiza', 'dinamarca', 'suecia', 'austria', 'polonia', 'turquia', 'serbia'],
+  },
+  { id: 'concacaf', label: 'NORTE Y CENTRO', ids: ['mexico', 'eeuu', 'canada', 'costarica', 'panama', 'jamaica'] },
+  { id: 'caf', label: 'ÁFRICA', ids: ['marruecos', 'senegal', 'costamarfil', 'nigeria', 'camerun', 'egipto', 'ghana', 'argelia', 'tunez'] },
+  { id: 'afc', label: 'ASIA', ids: ['japon', 'corea', 'iran', 'australia', 'arabia', 'qatar', 'irak', 'uzbekistan'] },
+  { id: 'ofc', label: 'OCEANÍA', ids: ['nzelanda'] },
+];
+
+// World Cups won (shown as stars in the selector).
+const WORLD_CUPS = { brasil: 5, alemania: 4, italia: 4, argentina: 3, francia: 2, uruguay: 2, inglaterra: 1, espana: 1 };
+
 export const NATIONS = RAW.map(([id, name, short, strength, pattern, c1, c2, away]) => ({
   id, name, short, strength,
   home: { pattern, colors: [c1, c2] },
   away: away ?? { pattern: 'trim', colors: [c2, c1] },
+  titles: WORLD_CUPS[id] ?? 0,
+  confederation: CONFEDERATIONS.find((c) => c.ids.includes(id)).id,
 })).sort((a, b) => b.strength - a.strength);
 
 export const NATION_BY_ID = Object.fromEntries(NATIONS.map((n) => [n.id, n]));
