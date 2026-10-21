@@ -1,6 +1,6 @@
 // League mode: fixture, results, standings, simulated matches and saving.
 import { TEAMS, TEAM_BY_ID } from './teams.js';
-import { BOT_LEVELS } from '../config.js';
+import { BOT_LEVELS, BALL } from '../config.js';
 
 const STORAGE_KEY = 'tejo-futbol-liga-v1';
 export const MATCH_SECONDS = 90;
@@ -162,17 +162,27 @@ function positionsById(league) {
 // medium bot, on hard even the small ones do. Strong teams are always tougher than weak ones.
 const DIFFICULTY_SHIFT = { easy: -0.35, medium: 0, hard: 0.35 };
 
+// Weakest bot of a medium or hard league (the kid-friendly BOT_LEVELS.easy is only the
+// floor of easy leagues, so small teams don't become pushovers on medium).
+const LEAGUE_FLOOR = { speed: 0.6, reaction: 200, kickChance: 0.5, error: 30 };
+
 // Turns a team's strength (and the league difficulty) into bot settings, blending the
-// easy and hard levels.
+// weakest and hard levels.
 export function botConfigFor(strength, difficulty = 'medium') {
   const t = clamp((strength - 0.35) / 0.6 + (DIFFICULTY_SHIFT[difficulty] ?? 0), 0, 1);
-  const { easy, hard } = BOT_LEVELS;
+  const { hard } = BOT_LEVELS;
+  const low = difficulty === 'easy' ? BOT_LEVELS.easy : LEAGUE_FLOOR;
   return {
-    speed: lerp(easy.speed, hard.speed, t),
-    reaction: lerp(easy.reaction, hard.reaction, t),
-    kickChance: lerp(easy.kickChance, hard.kickChance, t),
-    error: lerp(easy.error, hard.error, t),
+    speed: lerp(low.speed, hard.speed, t),
+    reaction: lerp(low.reaction, hard.reaction, t),
+    kickChance: lerp(low.kickChance, hard.kickChance, t),
+    error: lerp(low.error, hard.error, t),
     predict: t > 0.6 ? 'bounces' : 'straight',
+    dash: t > 0.6 ? 'smart' : t > 0.25 ? 'defense' : 'none',
+    // Soft kicks and body only at the weak end of an easy league.
+    kickPower: lerp(low.kickPower ?? 1, 1, t),
+    bodyDamp: lerp(low.bodyDamp ?? BALL.bodyDamp, BALL.bodyDamp, t),
+    aggression: lerp(low.aggression ?? 1, 1, t),
   };
 }
 

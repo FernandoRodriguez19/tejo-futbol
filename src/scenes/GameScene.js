@@ -866,6 +866,11 @@ export default class GameScene extends Phaser.Scene {
     }
   }
 
+  // The bot's settings if `p` is the bot-controlled player, else null.
+  botCfg(p) {
+    return this.bot && p === this.p2 ? this.bot.cfg : null;
+  }
+
   tryKick(p, time) {
     if (time > p.armedUntil || time - p.lastKick < KICK.cooldown) return;
     const b = this.ball;
@@ -878,7 +883,10 @@ export default class GameScene extends Phaser.Scene {
     // Haxball-style: the ball flies along the line from the player's centre to the ball.
     const nx = dx / dist;
     const ny = dy / dist;
-    const speed = Math.min(BALL.maxSpeed, Math.max(this.ballSpeed() * BALL.kickBoost, BALL.kickMin));
+    // Kicking in the middle of a dash is a power shot.
+    const dashing = p.dashLeft > 0;
+    const power = (dashing ? DASH.kickBoost : 1) * (this.botCfg(p)?.kickPower ?? 1);
+    const speed = Math.min(BALL.maxSpeed, Math.max(this.ballSpeed() * BALL.kickBoost, BALL.kickMin) * power);
     b.vx = nx * speed;
     b.vy = ny * speed;
     if (dist < PLAYER_R + BALL_R) {
@@ -898,9 +906,9 @@ export default class GameScene extends Phaser.Scene {
       life: [300, 600], size: [3, 5], colors: [0x6fbf2a, 0x9be33b, 0x4f9a1f], shape: 'rect', drag: 4,
     });
     this.cameras.main.shake(60, 0.002 + 0.006 * ratio);
-    if (ratio > 0.45) {
-      this.hitstop = 45 + 70 * ratio;
-      this.shout('zap', '¡ZAPATAZO!', PALETTE.yellow);
+    if (ratio > 0.45 || dashing) {
+      this.hitstop = 45 + 70 * Math.max(ratio, 0.6);
+      this.shout('zap', dashing ? '¡SUPER ZAPATAZO!' : '¡ZAPATAZO!', PALETTE.yellow);
     }
     if (wasShot) this.shout('save', '¡ATAJADA!', PALETTE.cyan, 1200);
     this.touch();
@@ -1012,7 +1020,7 @@ export default class GameScene extends Phaser.Scene {
       const preRatio = this.speedRatio();
       b.vx = rvx - 2 * dot * nx + p.vx;
       b.vy = rvy - 2 * dot * ny + p.vy;
-      this.setBallSpeed(this.ballSpeed() * BALL.bodyDamp);
+      this.setBallSpeed(this.ballSpeed() * (this.botCfg(p)?.bodyDamp ?? BALL.bodyDamp));
       b.lastTouch = p;
       sfx.body();
       p.squash = Math.max(p.squash, 0.4 + 0.6 * preRatio);

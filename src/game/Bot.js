@@ -1,12 +1,13 @@
 import {
   FIELD, MID_Y, CENTER_X, MOUTH_L, MOUTH_R,
-  PLAYER_R, BALL_R, KICK, BOT_LEVELS,
+  PLAYER_R, PLAYER_SPEED, BALL_R, KICK, DASH, BOT_LEVELS,
 } from '../config.js';
 
 const REACH = PLAYER_R + BALL_R;
 const KEEPER_Y = FIELD.top + PLAYER_R + 40; // where the bot stands to save shots
 const DETOUR = REACH + 30; // sideways gap kept when walking around the ball
-const DASH_FROM = 170; // distance to its target from which the bot dashes
+const DASH_REACH = (DASH.speed * DASH.duration) / 1000; // distance a dash covers
+const POWER_SHOT_MAX_BALL_SPEED = 700; // only dash into balls it can still control
 
 // Drives the top (red) player. It attacks the bottom goal and defends the top one.
 // Golden rule: the bot must stay "goal side" of the ball (between the ball and its own
@@ -53,11 +54,48 @@ export default class Bot {
     const kick = this.wantsKick && inReach && by / (ballDist || 1) > 0.15;
     if (kick) this.wantsKick = false;
 
-    // Dash (used only when the bar is full) when the spot it needs to reach is far and
-    // the play is on its side or coming at it: to get back in goal or reach the ball.
-    const dash = dist > DASH_FROM && (ball.vy < 0 || ball.y < MID_Y);
+    // The dash bar takes 30 s to fill, so it's saved for when it really pays off.
+    const dashDir = this.dashDirection();
+    if (dashDir) return { move: { x: dashDir.x * this.cfg.speed, y: dashDir.y * this.cfg.speed }, kick, dash: true };
 
-    return { move, kick, dash };
+    return { move, kick, dash: false };
+  }
+
+  // With a full dash bar, decides whether this is the moment to spend it. Returns the
+  // direction to dash in (the dash follows the player's movement), or null to keep it.
+  //   Save ('defense' and 'smart'): the ball is heading into our goal and walking we
+  //   won't be on its line in time, but dashing we will.
+  //   Power shot ('smart'): we're behind the ball, it's on our side and controllable,
+  //   and the line from us through the ball points at the opponent's goal.
+  dashDirection() {
+    const mode = this.cfg.dash ?? 'none';
+    const { player: p, ball: b } = this;
+    if (mode === 'none' || p.dash < 1) return null;
+
+    const walk = PLAYER_SPEED * this.cfg.speed;
+    const gain = DASH_REACH - (walk * DASH.duration) / 1000; // extra distance a dash buys
+
+    if (b.vy < -40 && b.y > KEEPER_Y) {
+      const t = (KEEPER_Y - b.y) / b.vy; // seconds until the ball reaches our keeper line
+      const crossX = this.predictX(KEEPER_Y);
+      const onTarget = crossX > MOUTH_L - 30 && crossX < MOUTH_R + 30;
+      const dx = this.target.x - p.x;
+      const dy = this.target.y - p.y;
+      const d = Math.hypot(dx, dy);
+      // Not when it's already too late to matter (t too small), nor when walking is enough.
+      if (onTarget && t > 0.12 && t < 1.2 && d > walk * t && d < walk * t + gain + 25) return { x: dx / d, y: dy / d };
+    }
+
+    if (mode === 'smart' && b.y < MID_Y && Math.hypot(b.vx, b.vy) < POWER_SHOT_MAX_BALL_SPEED) {
+      const dx = b.x - p.x;
+      const dy = b.y - p.y; // positive: the ball is below us, toward the opponent
+      const d = Math.hypot(dx, dy);
+      if (dy > REACH * 0.5 && d > REACH + 30 && d < REACH + DASH_REACH * 0.9) {
+        const hitX = b.x + dx * ((FIELD.bottom - b.y) / dy); // where the shot would cross the goal line
+        if (hitX > MOUTH_L - 60 && hitX < MOUTH_R + 60) return { x: dx / d, y: dy / d };
+      }
+    }
+    return null;
   }
 
   think() {
@@ -81,8 +119,9 @@ export default class Bot {
       // Ball coming at our goal: act as a goalkeeper on the line it will cross.
       const x = clamp(this.predictX(KEEPER_Y) + jitter(), MOUTH_L - 30, MOUTH_R + 30);
       dest = { x, y: KEEPER_Y };
-    } else if (ball.y < MID_Y + BALL_R) {
+    } else if (ball.y < MID_Y + BALL_R && Math.random() < (cfg.aggression ?? 1)) {
       // Ball on our side and not a threat: attack it from behind, aiming at the bottom goal.
+      // (A timid bot sometimes just stays home instead: the last branch.)
       let aimX = CENTER_X;
       if (cfg.predict === 'bounces') {
         // Aim at the side of the goal the opponent is not covering.

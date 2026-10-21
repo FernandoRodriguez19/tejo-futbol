@@ -60,7 +60,9 @@ pelota en el arco rival. La pelota nunca frena y con cada rebote se hace más r�
   vas: sirve para volver a defender o subir a atacar, pero no cruza la cancha (y nunca
   te deja pasar a la mitad rival).
 - Teclas: Shift izquierdo (jugador 1), Shift derecho (jugador 2; contra el bot, cualquiera
-  de los dos) y R1 en el joystick. El bot también lo usa para volver o llegar a la pelota.
+  de los dos) y R1 en el joystick.
+- **Super zapatazo:** si pateás en el medio de un dash, la patada sale un 35% más fuerte.
+- El bot guarda el dash para cuando le conviene (ver "Bot").
 
 ## Hielo y jabón (opcional)
 - Se activa en la pantalla "ANTES DE JUGAR" (después de elegir los equipos en 1 vs 1 o
@@ -103,9 +105,12 @@ pelota en el arco rival. La pelota nunca frena y con cada rebote se hace más r�
 - Al inicio del partido la pelota sale hacia un jugador al azar.
 
 ## Bot
-- Fácil: lento, reacciona tarde y patea poco.
-- Medio: defiende bien y patea cuando puede.
-- Difícil: rápido, anticipa la trayectoria y apunta al arco.
+- Fácil (pensado para chicos): muy lento, reacciona tarde, no anticipa la pelota, ataca
+  poco, sus patadas son flojas y su cuerpo frena la pelota. No usa el dash.
+- Medio: defiende bien y patea cuando puede. Usa el dash solo para salvar un gol que
+  caminando no llega a tapar.
+- Difícil: rápido, anticipa la trayectoria y apunta al arco. Usa el dash para salvar
+  goles y para meter un super zapatazo cuando tiene la pelota de frente apuntando al arco.
 
 ## Aspecto y sonido
 - Estilo cartoon inspirado en *Golazo!*: colores saturados, contornos oscuros gruesos,

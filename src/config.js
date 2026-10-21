@@ -42,6 +42,7 @@ export const DASH = {
   charge: 30000,
   duration: 180, // ms
   speed: 1100, // px/s
+  kickBoost: 1.35, // kicking during a dash: dash + kick = power shot
 };
 
 // Optional power-ups ("hielo y jabón"): every so often an ice block or a bar of soap
@@ -107,7 +108,16 @@ export const FONTS = {
 };
 
 export const BOT_LEVELS = {
-  easy: { label: 'Fácil', speed: 0.6, reaction: 200, predict: 'straight', kickChance: 0.5, error: 30 },
-  medium: { label: 'Medio', speed: 0.8, reaction: 130, predict: 'straight', kickChance: 0.85, error: 18 },
-  hard: { label: 'Difícil', speed: 1.0, reaction: 45, predict: 'bounces', kickChance: 1, error: 4 },
+  // dash: 'none' never; 'defense' only to save a shot it can't reach walking;
+  // 'smart' also to hit a power shot when it's lined up with the opponent's goal.
+  // Easy is meant for kids: slow, late, doesn't read the ball and barely kicks; its
+  // kicks are weak (kickPower) and its body soaks up the ball (bodyDamp), so its shots
+  // can be stopped, and it only goes after the ball some of the time (aggression).
+  // Levels without these use the normal values.
+  easy: {
+    label: 'Fácil', speed: 0.32, reaction: 520, predict: 'none', kickChance: 0.15, error: 90, dash: 'none',
+    kickPower: 0.6, bodyDamp: 0.6, aggression: 0.3,
+  },
+  medium: { label: 'Medio', speed: 0.8, reaction: 130, predict: 'straight', kickChance: 0.85, error: 18, dash: 'defense' },
+  hard: { label: 'Difícil', speed: 1.0, reaction: 45, predict: 'bounces', kickChance: 1, error: 4, dash: 'smart' },
 };
