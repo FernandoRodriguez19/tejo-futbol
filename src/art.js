@@ -381,6 +381,14 @@ function drawKitPattern(ctx, c, r, kit) {
     case 'halves':
       ctx.fillRect(c, x0, r, d);
       break;
+    case 'checks': { // checkerboard (Croatia)
+      const n = 5;
+      const sq = d / n;
+      for (let i = 0; i < n; i++) {
+        for (let j = 0; j < n; j++) if ((i + j) % 2) ctx.fillRect(x0 + i * sq, x0 + j * sq, sq + 0.5, sq + 0.5);
+      }
+      break;
+    }
     case 'v':
       ctx.beginPath();
       ctx.moveTo(x0, x0);

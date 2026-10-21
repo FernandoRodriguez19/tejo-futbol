@@ -32,12 +32,19 @@ Juego de fútbol 1 vs 1 en cancha vertical (mezcla de Pong, Haxball y tejo) hech
   sonido (`soundButton`, también con la tecla M). El volumen general vive en `sound.js`
   (`getVolume`, `cycleVolume`) y `music.js` lo aplica a todo el audio grabado.
 - `src/scenes/MenuScene.js` — menú con dos secciones de tarjetas: Partido normal (vs IA,
-  vs amigo) y Campeonato (liga, copa próximamente). La dificultad y los power-ups se
+  vs amigo) y Campeonato (liga, copa). La dificultad y los power-ups se
   eligen en la pantalla "antes de jugar" de `TeamSelectScene`.
 - `src/scenes/GameScene.js` — partido: movimiento, física de la pelota, goles, fin.
   En modo liga además: reloj de 90 s, pausa y guardado del resultado.
 - `src/scenes/TeamSelectScene.js` — elegir equipo para una liga nueva.
 - `src/scenes/LeagueScene.js` — tabla, resultados de la fecha, próximo partido y campeón.
+- `src/scenes/CupScene.js` — copa: grupos, llaves, resultados, próximo partido y campeón.
+- `src/cup/nations.js` — las 48 selecciones (colores, fuerza).
+- `src/cup/cup.js` — copa: sorteo de grupos, mejores terceros, llaves, simulación
+  (penales), guardado en localStorage.
+- Partidos de torneo: `GameScene` recibe `data.match` con `record(userGoals, rivalGoals)`
+  y `back` (a dónde vuelve), así sirve igual para la liga y la copa; `knockout: true`
+  activa el gol de oro.
 - `src/league/teams.js` — los 20 equipos: colores (titular y suplente), fuerza y choque de camisetas.
 - `src/league/league.js` — fixture, simulación, tabla, guardado en localStorage y bots por fuerza.
 - `src/game/Bot.js` — inteligencia del bot (fácil, medio, difícil).

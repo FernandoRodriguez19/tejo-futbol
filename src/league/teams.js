@@ -79,7 +79,7 @@ export const TEAMS = [
 export const TEAM_BY_ID = Object.fromEntries(TEAMS.map((t) => [t.id, t]));
 
 // How much of each colour shows for each pattern, to estimate the kit's overall colour.
-const MAIN_SHARE = { solid: 1, trim: 0.8, stripes: 0.5, band: 0.65, sash: 0.75, halves: 0.5, v: 0.8 };
+const MAIN_SHARE = { solid: 1, trim: 0.8, stripes: 0.5, band: 0.65, sash: 0.75, halves: 0.5, v: 0.8, checks: 0.5 };
 
 function rgb(hex) {
   const n = parseInt(hex.slice(1), 16);

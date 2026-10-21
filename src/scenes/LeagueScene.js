@@ -5,7 +5,7 @@ import { titleText, uiText, ribbon, button, goTo, wipeIn, playMenuMusic, soundBu
 import { sfx, unlockAudio } from '../sound.js';
 import { TEAM_BY_ID, pickKits } from '../league/teams.js';
 import {
-  loadLeague, clearLeague, standings, nextUserMatch, isFinished, totalRounds,
+  loadLeague, clearLeague, standings, nextUserMatch, isFinished, totalRounds, recordUserMatch,
 } from '../league/league.js';
 import { padMenu } from '../gamepads.js';
 
@@ -181,11 +181,15 @@ export default class LeagueScene extends Phaser.Scene {
     goTo(this, 'Game', {
       mode: 'league',
       match: {
-        league: this.league,
         user: this.user,
         rival,
         userKit: m.userIsHome ? kits.home : kits.away,
         rivalKit: m.userIsHome ? kits.away : kits.home,
+        difficulty: this.league.difficulty,
+        hazards: this.league.hazards,
+        knockout: false,
+        record: (userGoals, rivalGoals) => recordUserMatch(this.league, userGoals, rivalGoals),
+        back: { scene: 'League', data: { view: 'results' } },
       },
     });
   }

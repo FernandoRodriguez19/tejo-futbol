@@ -4,18 +4,19 @@ import { makeTextures, SPRITE_SCALE } from '../art.js';
 import { titleText, uiText, ribbon, goTo, wipeIn, playMenuMusic, soundButton } from '../ui.js';
 import { unlockAudio, sfx } from '../sound.js';
 import { loadLeague, totalRounds } from '../league/league.js';
+import { loadCup, stageLabel, isFinished as isCupFinished } from '../cup/cup.js';
 import { padMenu } from '../gamepads.js';
 
 // Two sections of two cards each, in a 2 x 2 grid:
 //   PARTIDO NORMAL: vs the AI, vs a friend (difficulty and power-ups are chosen after
 //                   picking the teams, on the "antes de jugar" screen)
-//   CAMPEONATO:     league, cup (coming soon)
+//   CAMPEONATO:     league (clubs), cup (nations)
 const CX = GAME_W / 2;
 const CARDS = {
   bot: { col: 0, row: 0, x: CX - 152, y: 614, w: 288, h: 196, color: COLORS.p1 },
   pvp: { col: 1, row: 0, x: CX + 152, y: 614, w: 288, h: 196, color: COLORS.pink },
   league: { col: 0, row: 1, x: CX - 152, y: 882, w: 288, h: 176, color: COLORS.purple },
-  cup: { col: 1, row: 1, x: CX + 152, y: 882, w: 288, h: 176, color: COLORS.purpleDark, soon: true },
+  cup: { col: 1, row: 1, x: CX + 152, y: 882, w: 288, h: 176, color: COLORS.cyan },
 };
 const ORDER = ['bot', 'pvp', 'league', 'cup'];
 
@@ -128,10 +129,10 @@ export default class MenuScene extends Phaser.Scene {
     const ball = this.add.image(0, -38, 'ball').setScale(SPRITE_SCALE * 2.4);
     this.tweens.add({ targets: ball, angle: 360, duration: 3000, repeat: -1 });
     const title = this.cardTitle(30, 'COPA', 36);
-    const soon = uiText(this, 0, 66, '¡PRÓXIMAMENTE!', 15, PALETTE.yellow);
-    const card = this.makeCard('cup', [ball, title, soon], title);
-    card.container.setAlpha(0.75);
-    return card;
+    const saved = loadCup();
+    const subText = saved && !isCupFinished(saved) ? `Seguir: ${stageLabel(saved).split(' · ')[0]}` : '48 selecciones del mundo';
+    const sub = uiText(this, 0, 66, subText, 15);
+    return this.makeCard('cup', [ball, title, sub], title);
   }
 
   drawCard(card, active) {
@@ -180,23 +181,12 @@ export default class MenuScene extends Phaser.Scene {
   start(key) {
     if (this.leaving || !key) return;
     unlockAudio();
-    if (CARDS[key].soon) {
-      this.comingSoon();
-      return;
-    }
     sfx.kickoff();
     // The league picks up where you left off, or starts by choosing a team. Friendlies
     // start by choosing both teams; difficulty and power-ups come right after.
     if (key === 'league') goTo(this, loadLeague() ? 'League' : 'TeamSelect', {});
+    else if (key === 'cup') goTo(this, loadCup() ? 'Cup' : 'TeamSelect', loadCup() ? {} : { purpose: 'cup' });
     else if (key === 'pvp') goTo(this, 'TeamSelect', { purpose: 'friendly', mode: 'pvp' });
     else goTo(this, 'TeamSelect', { purpose: 'friendly', mode: 'bot', level: this.registry.get('botLevel') ?? 'medium' });
-  }
-
-  comingSoon() {
-    sfx.select();
-    const { container } = this.cards.cup;
-    this.tweens.add({ targets: container, x: container.x + 8, duration: 50, yoyo: true, repeat: 3 });
-    const t = uiText(this, CARDS.cup.x, CARDS.cup.y - 110, '¡La copa llega pronto!', 22, PALETTE.yellow).setDepth(10);
-    this.tweens.add({ targets: t, y: t.y - 30, alpha: 0, delay: 700, duration: 500, onComplete: () => t.destroy() });
   }
 }

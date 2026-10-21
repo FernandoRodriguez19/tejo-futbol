@@ -19,7 +19,7 @@ import Replay from '../game/Replay.js';
 import {
   floatText, drawEyes, drawNetRipple, makeFans, drawCrowd, headingIntoGoal,
 } from '../game/juice.js';
-import { MATCH_SECONDS, botConfigFor, recordUserMatch } from '../league/league.js';
+import { MATCH_SECONDS, botConfigFor } from '../league/league.js';
 import { mainColor, pickKits, TEAM_BY_ID } from '../league/teams.js';
 
 const POSTS = [
@@ -41,16 +41,22 @@ export default class GameScene extends Phaser.Scene {
     super('Game');
   }
 
-  // data.mode: 'pvp' | 'bot' | 'league'. League matches also get
-  // data.match = { league, user, rival, userKit, rivalKit } (teams from teams.js).
-  // Friendlies get data.teams = { p1, p2 } (team ids) to wear those teams' kits.
+  // data.mode: 'pvp' | 'bot' | 'league'. Tournament matches (league and cup, mode
+  // 'league') also get data.match = {
+  //   user, rival, userKit, rivalKit,   teams (clubs or nations) and their kits
+  //   difficulty, hazards,              tournament settings
+  //   knockout,                         true: a draw at full time goes to golden goal
+  //   record(userGoals, rivalGoals),    saves the result
+  //   back: { scene, data },            where "continuar" goes afterwards
+  // }. Friendlies get data.teams = { p1, p2 } (club ids) to wear those teams' kits.
   init(data) {
     this.mode = data.mode ?? 'pvp';
     this.level = data.level ?? 'medium';
     this.match = data.match ?? null;
     this.teams = data.teams ?? null;
-    // Ice & soap hazards: a league setting, or chosen before each friendly.
-    this.hazardsOn = this.match ? !!this.match.league.hazards : !!data.hazards;
+    // Ice & soap hazards: a tournament setting, or chosen before each friendly.
+    this.hazardsOn = this.match ? !!this.match.hazards : !!data.hazards;
+    this.goldenGoal = false;
   }
 
   // Kits and names for both sides: league teams, the teams picked for a friendly, or
@@ -117,7 +123,7 @@ export default class GameScene extends Phaser.Scene {
     this.grass = new Particles(this, 5.5);
     this.trail = [];
 
-    if (m) this.bot = new Bot(this.p2, this.ball, this.p1, botConfigFor(m.rival.strength, m.league.difficulty));
+    if (m) this.bot = new Bot(this.p2, this.ball, this.p1, botConfigFor(m.rival.strength, m.difficulty));
     else this.bot = this.mode === 'bot' ? new Bot(this.p2, this.ball, this.p1, this.level) : null;
 
     this.score = { p1: 0, p2: 0 };
@@ -391,23 +397,41 @@ export default class GameScene extends Phaser.Scene {
     this.cameras.main.flash(150, 255, 255, 255);
 
     const name = scorer === this.p1 ? this.p1Name : this.p2Name;
-    // League matches are played against the clock instead of to WIN_GOALS.
+    // Tournament matches are played against the clock instead of to WIN_GOALS; a golden
+    // goal ends the match.
     const won = !this.match && (this.score.p1 >= WIN_GOALS || this.score.p2 >= WIN_GOALS);
+    const golden = this.goldenGoal;
 
     sfx.goal();
-    if (won) {
+    if (won || golden) {
       this.musicOver = true;
       stopChant();
     } else {
       changeMatchTrack();
       this.updateChant();
     }
-    this.showBanner('¡GOLAZO!', name.toUpperCase(), true);
+    this.showBanner(golden ? '¡GOL DE ORO!' : '¡GOLAZO!', name.toUpperCase(), true);
 
     this.time.delayedCall(GOAL_PAUSE, () => this.startReplay(() => {
       if (won) this.showWin(scorer);
+      else if (golden) this.endLeagueMatch();
       else this.kickoff(conceder);
     }));
+  }
+
+  // Knockout match tied at full time: play on until someone scores.
+  startGoldenGoal() {
+    this.goldenGoal = true;
+    this.timeLeft = 0;
+    this.clockText.setText('ORO').setColor(PALETTE.yellow);
+    sfx.whistle();
+    this.asUI(() => {
+      const t = titleText(this, CENTER_X, MID_Y - 150, '¡GOL DE ORO!', 72, PALETTE.yellow).setDepth(12).setScale(0.3);
+      const sub = uiText(this, CENTER_X, MID_Y - 85, 'El próximo gol gana', 24).setDepth(12).setAlpha(0);
+      this.tweens.add({ targets: t, scale: 1, duration: 300, ease: 'Back.Out' });
+      this.tweens.add({ targets: sub, alpha: 1, duration: 300 });
+      this.tweens.add({ targets: [t, sub], alpha: 0, delay: 1800, duration: 400, onComplete: () => { t.destroy(); sub.destroy(); } });
+    });
   }
 
   showWin(scorer) {
@@ -444,25 +468,29 @@ export default class GameScene extends Phaser.Scene {
     this.chant.rank = rank;
   }
 
-  // Final whistle of a league match: save the result and show it.
+  // Final whistle of a tournament match: save the result and show it.
   endLeagueMatch() {
     this.state = 'over';
     stopChant();
     stopMatchMusic();
-    this.timeLeft = 0;
-    this.updateClock();
+    if (!this.goldenGoal) {
+      this.timeLeft = 0;
+      this.updateClock();
+    }
     this.ball.vx = this.ball.vy = 0;
     this.trailGfx.clear();
     this.speedText.setText('x1.0');
     sfx.whistle();
-    recordUserMatch(this.match.league, this.score.p1, this.score.p2);
+    this.match.record(this.score.p1, this.score.p2);
     this.showResult('¡FINAL!');
   }
 
   showResult(title) {
     const { p1, p2 } = this.score;
     let verdict = ['EMPATE  ·  +1 PUNTO', PALETTE.white];
-    if (p1 > p2) verdict = ['¡GANASTE!  ·  +3 PUNTOS', PALETTE.yellow];
+    if (this.match.knockout) {
+      verdict = p1 > p2 ? ['¡GANASTE!  ·  PASÁS DE RONDA', PALETTE.yellow] : ['PERDISTE  ·  QUEDÁS AFUERA', '#ff9aa3'];
+    } else if (p1 > p2) verdict = ['¡GANASTE!  ·  +3 PUNTOS', PALETTE.yellow];
     else if (p1 < p2) verdict = ['PERDISTE  ·  0 PUNTOS', '#ff9aa3'];
     if (p1 > p2) sfx.win();
     this.asUI(() => {
@@ -514,7 +542,7 @@ export default class GameScene extends Phaser.Scene {
     stopMatchMusic();
     this.score = { p1: 0, p2: 3 };
     this.updateHud();
-    recordUserMatch(this.match.league, 0, 3);
+    this.match.record(0, 3);
     this.showResult('ABANDONASTE');
   }
 
@@ -649,7 +677,7 @@ export default class GameScene extends Phaser.Scene {
 
     if (this.state === 'over') {
       if (this.match) {
-        if (pressed(k.enter) || pressed(k.space) || padPressed(BTN.A, BTN.START)) goTo(this, 'League', { view: 'results' });
+        if (pressed(k.enter) || pressed(k.space) || padPressed(BTN.A, BTN.START)) goTo(this, this.match.back.scene, this.match.back.data);
       } else if (pressed(k.esc) || padPressed(BTN.B, BTN.START)) {
         goTo(this, 'Menu');
       } else if (pressed(k.r) || padPressed(BTN.A)) {
@@ -685,7 +713,7 @@ export default class GameScene extends Phaser.Scene {
 
     const scale = time < this.slowmoUntil ? SLOWMO : 1;
 
-    if (this.match && this.state === 'playing') {
+    if (this.match && this.state === 'playing' && !this.goldenGoal) {
       const before = Math.ceil(this.timeLeft / 1000);
       this.timeLeft -= delta * scale;
       const after = Math.ceil(this.timeLeft / 1000);
@@ -695,8 +723,12 @@ export default class GameScene extends Phaser.Scene {
       }
       this.updateClock();
       if (this.timeLeft <= 0) {
-        this.endLeagueMatch();
-        return;
+        if (this.match.knockout && this.score.p1 === this.score.p2) {
+          this.startGoldenGoal();
+        } else {
+          this.endLeagueMatch();
+          return;
+        }
       }
     }
 

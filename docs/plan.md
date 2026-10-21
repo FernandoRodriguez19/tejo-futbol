@@ -45,6 +45,10 @@
   primero (se recuerda), y se rompen al pegarles. Golpes más fuertes (con limitador) y
   música/hinchada más bajas; todos los volúmenes en `AUDIO` de `src/config.js`.
 
+- [x] 13. Menú en dos secciones (Partido normal y Campeonato).
+- [x] 14. Copa de naciones: 48 selecciones, fase de grupos o eliminación directa, tamaño
+  elegible (48 a 4), gol de oro en eliminación, simular si te eliminan.
+
 ## Ideas para después
 - Controles táctiles para celular.
 - Elegir cantidad de goles.

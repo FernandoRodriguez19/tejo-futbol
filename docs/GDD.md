@@ -64,6 +64,23 @@ pelota en el arco rival. La pelota nunca frena y con cada rebote se hace más r�
 - **Super zapatazo:** si pateás en el medio de un dash, la patada sale un 35% más fuerte.
 - El bot guarda el dash para cuando le conviene (ver "Bot").
 
+## Copa de naciones
+- 48 selecciones elegidas por historia y presente, repartidas como un Mundial de 48:
+  16 de Europa, 8 de Sudamérica, 6 de Norte y Centroamérica, 9 de África, 8 de Asia y
+  1 de Oceanía. Colores reales (Croacia con cuadros); cada una tiene su fuerza.
+- Después de elegir la selección, en "antes de jugar":
+  - **Formato:** fase de grupos o eliminación directa.
+  - **Equipos:** con grupos 48 (12 grupos), 32, 16 u 8 (2 grupos); en eliminación
+    directa 32, 16, 8 o 4. Si se achica, juegan los mejores (y siempre tu selección).
+  - **Dificultad** y **power-ups**, como en la liga.
+- Grupos de 4 sorteados por bombos (como en el Mundial), 3 fechas, 3 puntos por ganar y
+  1 por empatar. Pasan los 2 primeros; con 12 grupos también los 8 mejores terceros.
+- Eliminación: llaves sembradas (los mejores se cruzan al final). Partidos de 90 s; si
+  terminan empatados, **gol de oro**: se sigue jugando hasta el próximo gol. Los partidos
+  simulados que empatan se definen por penales (marcados con *).
+- Si te eliminan, podés simular el resto para ver quién sale campeón.
+- Se guarda sola y se puede abandonar para empezar otra.
+
 ## Hielo y jabón (opcional)
 - Se activa en la pantalla "ANTES DE JUGAR" (después de elegir los equipos en 1 vs 1 o
   contra el bot, y al crear la liga, junto con la dificultad).
@@ -153,7 +170,7 @@ pelota en el arco rival. La pelota nunca frena y con cada rebote se hace más r�
 ## Pantallas
 1. Menú con dos secciones:
    - **Partido normal:** VS LA IA o VS AMIGO.
-   - **Campeonato:** LIGA y COPA (próximamente).
+   - **Campeonato:** LIGA (clubes) y COPA (selecciones).
 2. Elegir equipos (uno en la liga, los dos en los partidos normales).
 3. "Antes de jugar": dificultad (contra la IA y en la liga) y power-ups sí/no. Recuerda la
    última elección.
