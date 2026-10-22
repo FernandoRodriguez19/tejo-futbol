@@ -127,10 +127,13 @@ pelota en el arco rival. La pelota nunca frena y con cada rebote se hace más r�
 - Al inicio del partido la pelota sale hacia un jugador al azar.
 
 ## Bot
-- Fácil (pensado para chicos): muy lento, reacciona tarde, no anticipa la pelota, ataca
-  poco, sus patadas son flojas y su cuerpo frena la pelota. No usa el dash.
-- Medio: defiende bien y patea cuando puede. Usa el dash solo para salvar un gol que
-  caminando no llega a tapar.
+Cuatro niveles que suben de a escalones parejos:
+- Muy fácil (pensado para chicos): muy lento, reacciona tarde, no anticipa la pelota,
+  ataca poco, sus patadas son flojas y su cuerpo frena la pelota. No usa el dash.
+- Fácil: juega de verdad pero lento y se equivoca bastante; patea la mitad de las veces,
+  con patadas un poco más flojas, y a veces no va a buscar la pelota. No usa el dash.
+- Medio: partido parejo. Defiende y patea casi siempre. Usa el dash solo para salvar un
+  gol que caminando no llega a tapar.
 - Difícil: rápido, anticipa la trayectoria y apunta al arco. Usa el dash para salvar
   goles y para meter un super zapatazo cuando tiene la pelota de frente apuntando al arco.
 

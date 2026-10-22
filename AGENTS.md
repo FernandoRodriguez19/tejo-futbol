@@ -55,7 +55,7 @@ Juego de fútbol 1 vs 1 en cancha vertical (mezcla de Pong, Haxball y tejo) hech
   activa el gol de oro.
 - `src/league/teams.js` — los 20 equipos: colores (titular y suplente), fuerza y choque de camisetas.
 - `src/league/league.js` — fixture, simulación, tabla, guardado en localStorage y bots por fuerza.
-- `src/game/Bot.js` — inteligencia del bot (fácil, medio, difícil).
+- `src/game/Bot.js` — inteligencia del bot (muy fácil, fácil, medio, difícil; valores en `BOT_LEVELS`).
 - `src/game/juice.js` — efectos: ojitos, red que se mueve, tribuna que salta, textos
   flotantes y detección de tiros al arco.
 - `src/game/Particles.js` — partículas livianas (polvo, pasto, fuego) dibujadas en un Graphics.

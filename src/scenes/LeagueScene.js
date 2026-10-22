@@ -1,7 +1,7 @@
 import * as Phaser from 'phaser';
 import { GAME_W, GAME_H, COLORS, PALETTE, FONTS } from '../config.js';
 import { makeTextures, kitTexture } from '../art.js';
-import { titleText, uiText, ribbon, button, goTo, wipeIn, playMenuMusic, soundButton } from '../ui.js';
+import { titleText, uiText, ribbon, button, goTo, wipeIn, playMenuMusic, soundButton, levelLabel } from '../ui.js';
 import { sfx, unlockAudio } from '../sound.js';
 import { TEAM_BY_ID, pickKits } from '../league/teams.js';
 import {
@@ -82,7 +82,7 @@ export default class LeagueScene extends Phaser.Scene {
   drawHeader() {
     const round = Math.min(this.league.round + 1, totalRounds(this.league));
     ribbon(this, CX, 58, 'LIGA ARGENTINA', 380, 54).setAngle(-2);
-    const level = { easy: 'FÁCIL', medium: 'MEDIO', hard: 'DIFÍCIL' }[this.league.difficulty ?? 'medium']
+    const level = levelLabel(this.league.difficulty ?? 'medium')
       + (this.league.hazards ? '  ·  HIELO Y JABÓN' : '');
     const subtitle = isFinished(this.league)
       ? `TORNEO TERMINADO  ·  ${level}`

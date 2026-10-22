@@ -7,7 +7,7 @@ export const MATCH_SECONDS = 90;
 
 // ---------- creation and saving ----------
 
-// difficulty: 'easy' | 'medium' | 'hard' (see botConfigFor). hazards: ice & soap on/off.
+// difficulty: 'veryEasy' | 'easy' | 'medium' | 'hard' (see botConfigFor). hazards: ice & soap on/off.
 export function newLeague(userId, difficulty = 'medium', hazards = false) {
   const ids = shuffle(TEAMS.map((t) => t.id));
   return { userId, difficulty, hazards, round: 0, schedule: roundRobin(ids), results: [], prevPositions: null };
@@ -160,10 +160,10 @@ function positionsById(league) {
 
 // How the league difficulty shifts every rival: on easy even the big teams play like a
 // medium bot, on hard even the small ones do. Strong teams are always tougher than weak ones.
-const DIFFICULTY_SHIFT = { easy: -0.35, medium: 0, hard: 0.35 };
+const DIFFICULTY_SHIFT = { veryEasy: -0.5, easy: -0.35, medium: 0, hard: 0.35 };
 
-// Weakest bot of a medium or hard league (the kid-friendly BOT_LEVELS.easy is only the
-// floor of easy leagues, so small teams don't become pushovers on medium).
+// Weakest bot of a medium or hard league (the very easy and easy levels are only the
+// floor of their own leagues, so small teams don't become pushovers on medium).
 const LEAGUE_FLOOR = { speed: 0.6, reaction: 200, kickChance: 0.5, error: 30 };
 
 // Turns a team's strength (and the league difficulty) into bot settings, blending the
@@ -171,7 +171,7 @@ const LEAGUE_FLOOR = { speed: 0.6, reaction: 200, kickChance: 0.5, error: 30 };
 export function botConfigFor(strength, difficulty = 'medium') {
   const t = clamp((strength - 0.35) / 0.6 + (DIFFICULTY_SHIFT[difficulty] ?? 0), 0, 1);
   const { hard } = BOT_LEVELS;
-  const low = difficulty === 'easy' ? BOT_LEVELS.easy : LEAGUE_FLOOR;
+  const low = difficulty === 'veryEasy' || difficulty === 'easy' ? BOT_LEVELS[difficulty] : LEAGUE_FLOOR;
   return {
     speed: lerp(low.speed, hard.speed, t),
     reaction: lerp(low.reaction, hard.reaction, t),

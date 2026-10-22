@@ -2,14 +2,10 @@
 // the cup's format and size) and a "¡A JUGAR!" button, drawn over the current screen.
 // Up/down picks a row, left/right (or Enter / click) changes its value.
 import { GAME_W, GAME_H, COLORS, PALETTE } from './config.js';
-import { titleText, uiText, button } from './ui.js';
+import { titleText, uiText, button, levelLabel } from './ui.js';
 import { sfx } from './sound.js';
 
-export const LEVELS = [
-  { id: 'easy', label: 'FÁCIL' },
-  { id: 'medium', label: 'MEDIO' },
-  { id: 'hard', label: 'DIFÍCIL' },
-];
+export const LEVELS = ['veryEasy', 'easy', 'medium', 'hard'].map((id) => ({ id, label: levelLabel(id) }));
 
 export default class SetupPanel {
   //   icons: [{ texture, scale }] shown at the top (kits, a flag...)

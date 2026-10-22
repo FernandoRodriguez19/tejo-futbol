@@ -110,14 +110,19 @@ export const FONTS = {
 export const BOT_LEVELS = {
   // dash: 'none' never; 'defense' only to save a shot it can't reach walking;
   // 'smart' also to hit a power shot when it's lined up with the opponent's goal.
-  // Easy is meant for kids: slow, late, doesn't read the ball and barely kicks; its
-  // kicks are weak (kickPower) and its body soaks up the ball (bodyDamp), so its shots
-  // can be stopped, and it only goes after the ball some of the time (aggression).
-  // Levels without these use the normal values.
-  easy: {
-    label: 'Fácil', speed: 0.32, reaction: 520, predict: 'none', kickChance: 0.15, error: 90, dash: 'none',
+  // The four levels go up in even steps. Very easy is meant for kids: slow, late,
+  // doesn't read the ball and barely kicks; its kicks are weak (kickPower) and its body
+  // soaks up the ball (bodyDamp), so its shots can be stopped, and it only goes after
+  // the ball some of the time (aggression). Easy keeps a little of that; levels without
+  // these use the normal values.
+  veryEasy: {
+    label: 'Muy fácil', speed: 0.32, reaction: 520, predict: 'none', kickChance: 0.15, error: 90, dash: 'none',
     kickPower: 0.6, bodyDamp: 0.6, aggression: 0.3,
   },
-  medium: { label: 'Medio', speed: 0.8, reaction: 130, predict: 'straight', kickChance: 0.85, error: 18, dash: 'defense' },
+  easy: {
+    label: 'Fácil', speed: 0.55, reaction: 260, predict: 'straight', kickChance: 0.5, error: 40, dash: 'none',
+    kickPower: 0.85, aggression: 0.75,
+  },
+  medium: { label: 'Medio', speed: 0.72, reaction: 160, predict: 'straight', kickChance: 0.75, error: 24, dash: 'defense' },
   hard: { label: 'Difícil', speed: 1.0, reaction: 45, predict: 'bounces', kickChance: 1, error: 4, dash: 'smart' },
 };

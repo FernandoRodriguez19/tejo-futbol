@@ -2,7 +2,7 @@ import * as Phaser from 'phaser';
 import { GAME_W, GAME_H, COLORS, PALETTE, FONTS } from '../config.js';
 import { makeTextures } from '../art.js';
 import { flagTexture } from '../cup/flags.js';
-import { titleText, uiText, ribbon, button, goTo, wipeIn, playMenuMusic, soundButton } from '../ui.js';
+import { titleText, uiText, ribbon, button, goTo, wipeIn, playMenuMusic, soundButton, levelLabel } from '../ui.js';
 import { sfx, unlockAudio } from '../sound.js';
 import { pickKits } from '../league/teams.js';
 import { NATION_BY_ID } from '../cup/nations.js';
@@ -16,7 +16,6 @@ const CX = GAME_W / 2;
 const HINT = '← → / cruz: elegir botón  ·  Enter / A: aceptar  ·  Tab / Y: cambiar vista  ·  Esc / B: menú';
 const BODY_TOP = 158;
 const BODY_BOTTOM = 858;
-const LEVEL_LABEL = { easy: 'FÁCIL', medium: 'MEDIO', hard: 'DIFÍCIL' };
 const VIEW_LABEL = { groups: 'GRUPOS', bracket: 'LLAVES', results: 'RESULTADOS', final: 'CAMPEÓN' };
 
 // Cup hub: group tables, the knockout bracket, last results, next match and the final.
@@ -92,7 +91,7 @@ export default class CupScene extends Phaser.Scene {
   drawHeader() {
     const c = this.cup;
     ribbon(this, CX, 56, 'COPA DE NACIONES', 400, 52).setAngle(-2);
-    const extras = `${LEVEL_LABEL[c.difficulty]}${c.hazards ? '  ·  POWER-UPS' : ''}`;
+    const extras = `${levelLabel(c.difficulty)}${c.hazards ? '  ·  POWER-UPS' : ''}`;
     const status = c.eliminated && !isFinished(c) ? 'QUEDASTE AFUERA' : stageLabel(c);
     uiText(this, CX, 116, `${status}  ·  ${this.user.short}  ·  ${extras}`, 19, PALETTE.yellow);
   }

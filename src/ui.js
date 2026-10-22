@@ -1,6 +1,6 @@
 // Shared cartoon UI pieces: chunky outlined text, buttons, the purple ribbon banner and
 // the striped wipe used between screens.
-import { COLORS, PALETTE, FONTS, GAME_W, GAME_H } from './config.js';
+import { COLORS, PALETTE, FONTS, GAME_W, GAME_H, BOT_LEVELS } from './config.js';
 import { startLoop } from './music.js';
 import { unlockAudio, sfx, getVolume, cycleVolume, onVolumeChange } from './sound.js';
 
@@ -133,6 +133,11 @@ export function levelBadge(scene, x, y) {
     scene.tweens.add({ targets: container, scale: 1, duration: 300, ease: 'Back.Out' });
   };
   return { container, setLevel };
+}
+
+// Bot difficulty id ('veryEasy', 'easy', 'medium', 'hard') as shown on screen: "MUY FÁCIL".
+export function levelLabel(id) {
+  return (BOT_LEVELS[id] ?? BOT_LEVELS.medium).label.toUpperCase();
 }
 
 // Strength (0..1) as the 55-97 "level" number and 1-5 stars the pickers show.

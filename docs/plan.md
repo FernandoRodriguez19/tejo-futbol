@@ -54,6 +54,8 @@
   joystick arriba a la izquierda, o C / Y), también disponible en la pausa.
 - [x] 17. Pausa nueva: tarjeta con el marcador (y el reloj en torneo) y cuatro botones con
   íconos: seguir, controles, sonido y salir/abandonar.
+- [x] 18. Cuatro dificultades en escalones parejos: Muy fácil (el fácil para chicos de
+  antes), Fácil nuevo intermedio, Medio un poco más blando y Difícil igual.
 
 ## Ideas para después
 - Controles táctiles para celular.
