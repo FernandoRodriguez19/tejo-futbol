@@ -37,10 +37,10 @@ export const KICK = {
 };
 
 // Dash: a short burst of speed (Shift / R1). The bar fills in `charge` ms of play; the
-// dash covers about duration × speed = 200 px, under half of your own half.
+// dash covers about duration × speed = 130 px, a short burst.
 export const DASH = {
   charge: 30000,
-  duration: 180, // ms
+  duration: 120, // ms
   speed: 1100, // px/s
   kickBoost: 1.35, // kicking during a dash: dash + kick = power shot
 };

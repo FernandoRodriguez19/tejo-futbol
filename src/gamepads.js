@@ -113,13 +113,23 @@ function menuCodes() {
   return codes;
 }
 
+// The same controller often shows up twice (e.g. Steam adds a virtual copy of it), so a
+// menu action that comes again this soon, from any pad, is taken as that copy and skipped.
+const MENU_DEBOUNCE = 120; // ms (shorter than REPEAT_EVERY, so holding still repeats)
+const lastMenuCode = {};
+
 // Lets a menu scene be driven by joystick: each frame, pad input is fed to the scene's
 // keydown handler as fake key events.
 export function padMenu(scene, onKey) {
   const tick = () => {
     const fresh = pollPads();
     fresh.forEach((n) => padToast(scene, n));
-    for (const code of menuCodes()) onKey({ code, preventDefault() {} });
+    const now = performance.now();
+    for (const code of new Set(menuCodes())) {
+      if (now - (lastMenuCode[code] ?? -Infinity) < MENU_DEBOUNCE) continue;
+      lastMenuCode[code] = now;
+      onKey({ code, preventDefault() {} });
+    }
   };
   scene.events.on('update', tick);
   scene.events.once('shutdown', () => scene.events.off('update', tick));

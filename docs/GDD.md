@@ -57,7 +57,7 @@ pelota en el arco rival. La pelota nunca frena y con cada rebote se hace más r�
   gol se vuelve a llenar. Una vez usado, la barra tarda **30 segundos** de juego en
   llenarse (no carga durante los festejos ni las repeticiones). Se ve abajo del marcador y
   como un anillo alrededor del jugador (amarillo cuando está lista).
-- Con la barra llena y moviéndote, el dash te impulsa unos 200 px en la dirección en que
+- Con la barra llena y moviéndote, el dash te impulsa unos 130 px en la dirección en que
   vas: sirve para volver a defender o subir a atacar, pero no cruza la cancha (y nunca
   te deja pasar a la mitad rival).
 - Teclas: Shift izquierdo (jugador 1), Shift derecho (jugador 2; contra el bot, cualquiera

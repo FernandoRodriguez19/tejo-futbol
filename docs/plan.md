@@ -58,6 +58,8 @@
   antes), Fácil nuevo intermedio, Medio un poco más blando y Difícil igual.
 - [x] 19. Sonidos de aceptar y de volver/salir en todos los menús. Menú de sonido con
   volumen separado para música, hinchada y efectos, más "silenciar todo" (M).
+- [x] 20. Dash más corto (120 ms, unos 130 px). En los menús, un control que aparece dos
+  veces (por ejemplo con Steam abierto) ya no aprieta ni mueve dos veces.
 
 ## Ideas para después
 - Controles táctiles para celular.
