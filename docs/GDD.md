@@ -102,8 +102,8 @@ pelota en el arco rival. La pelota nunca frena y con cada rebote se hace más r�
   aparece más.
 - Al pegarle, el hielo **estalla en pedazos** ("¡CRASH!") y el jabón **en burbujas**
   ("¡PLOP!"), con un mini freno y temblor de cámara, y sale volando al rival.
-- **Hielo:** el rival queda congelado 5 s: no se puede mover ni usar el dash.
-- **Jabón:** el rival patina 6 s con muy poco agarre: le cuesta mucho frenar y doblar.
+- **Hielo:** el rival queda congelado 2 s: no se puede mover ni usar el dash.
+- **Jabón:** el rival patina 3 s con muy poco agarre: le cuesta mucho frenar y doblar.
 - Se borran en cada saque.
 
 ## Controles

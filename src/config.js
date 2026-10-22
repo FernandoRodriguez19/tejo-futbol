@@ -54,9 +54,9 @@ export const HAZARDS = {
   lifetime: 9000, // ms an item stays on the pitch
   maxOnField: 2,
   radius: 24,
-  freezeTime: 5000, // ms frozen
+  freezeTime: 2000, // ms frozen
   freezeSpeed: 0, // speed multiplier while frozen (0 = can't move at all)
-  soapTime: 6000, // ms slippery
+  soapTime: 3000, // ms slippery
   soapGrip: 1.2, // how fast you can change direction on soap (lower = slipperier)
   throwTime: 350, // ms the item takes to fly to the rival
 };
