@@ -1,7 +1,9 @@
 import * as Phaser from 'phaser';
 import { GAME_W, COLORS, PALETTE, FONTS } from '../config.js';
 import { makeTextures, SPRITE_SCALE } from '../art.js';
-import { titleText, uiText, ribbon, button, goTo, wipeIn, playMenuMusic, soundButton } from '../ui.js';
+import {
+  titleText, uiText, ribbon, button, goTo, wipeIn, playMenuMusic, soundButton, controlsButton, controlsPanel,
+} from '../ui.js';
 import { unlockAudio, sfx } from '../sound.js';
 import { loadLeague, totalRounds } from '../league/league.js';
 import { loadCup, stageLabel, isFinished as isCupFinished } from '../cup/cup.js';
@@ -68,14 +70,23 @@ export default class MenuScene extends Phaser.Scene {
     this.backBtn.zone.on('pointerover', () => this.setFocus('back'));
 
     soundButton(this, GAME_W - 52, 52);
+    this.controls = null;
+    controlsButton(this, 52, 52, () => this.openControls());
 
-    uiText(this, CX, 990, 'Jugador 1 (azul): W A S D + Espacio  ·  Shift izq: dash', 18, '#8fc4ff');
-    uiText(this, CX, 1018, 'Jugador 2 (rojo): Flechas + Enter  ·  Shift der: dash', 18, '#ff9aa3');
-    uiText(this, CX, 1046, '🎮 Joystick: stick o cruz · A patear · R1 dash · Start pausa', 17, PALETTE.cyan);
-    uiText(this, CX, 1082, 'Flechas elegir  ·  Enter / A entrar  ·  Esc / B volver  ·  M sonido', 16);
+    uiText(this, CX, 1050, 'Flechas elegir  ·  Enter / A entrar  ·  Esc / B volver', 17);
+    uiText(this, CX, 1080, 'C / Y: controles  ·  M: sonido', 17, PALETTE.yellow);
 
     const onKey = (event) => {
       unlockAudio();
+      if (this.controls) {
+        this.controls.key(event.code);
+        return;
+      }
+      if (event.code === 'KeyC' || event.code === 'Tab') {
+        event.preventDefault();
+        this.openControls();
+        return;
+      }
       const dir = { ArrowUp: 'up', KeyW: 'up', ArrowDown: 'down', KeyS: 'down', ArrowLeft: 'left', KeyA: 'left', ArrowRight: 'right', KeyD: 'right' }[event.code];
       if (dir) this.move(dir);
       else if (event.code === 'Enter' || event.code === 'Space') this.start(this.focus);
@@ -201,6 +212,11 @@ export default class MenuScene extends Phaser.Scene {
       targets: container, scale: active ? 1.05 : 1, angle: active ? -1.5 : 0, alpha: 1,
       duration: 160, ease: 'Back.Out',
     });
+  }
+
+  openControls() {
+    if (this.controls || this.leaving) return;
+    this.controls = controlsPanel(this, () => { this.controls = null; });
   }
 
   // ---------- pages ----------

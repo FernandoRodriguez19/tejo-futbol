@@ -5,7 +5,7 @@ import {
   KICKOFF_DELAY, COLORS, PALETTE, FONTS, BOT_LEVELS, DASH, HAZARDS,
 } from '../config.js';
 import { makeTextures, kitTexture, SPRITE_SCALE } from '../art.js';
-import { titleText, uiText, ribbon, goTo, wipeIn, soundButton } from '../ui.js';
+import { titleText, uiText, ribbon, goTo, wipeIn, soundButton, controlsButton, controlsPanel } from '../ui.js';
 import { sfx, unlockAudio } from '../sound.js';
 import {
   playChant, stopChant, pauseChant, resumeChant, stopLoop, pauseLoops, resumeLoops, playSound,
@@ -90,7 +90,7 @@ export default class GameScene extends Phaser.Scene {
     this.keys = this.input.keyboard.addKeys({
       w: 'W', a: 'A', s: 'S', d: 'D', space: 'SPACE',
       up: 'UP', down: 'DOWN', left: 'LEFT', right: 'RIGHT', enter: 'ENTER',
-      esc: 'ESC', r: 'R', q: 'Q',
+      esc: 'ESC', r: 'R', q: 'Q', c: 'C',
     });
 
     // World layers, bottom to top.
@@ -518,13 +518,22 @@ export default class GameScene extends Phaser.Scene {
         uiText(this, CENTER_X, MID_Y + 50, 'ESC / START: SEGUIR JUGANDO', 24),
         uiText(this, CENTER_X, MID_Y + 100,
           this.match ? 'Q / SELECT: ABANDONAR (PERDÉS 0-3)' : 'Q / SELECT: SALIR AL MENÚ', 24, '#ff9aa3'),
+        controlsButton(this, CENTER_X - 130, MID_Y + 180, () => this.openControls()),
+        uiText(this, CENTER_X - 86, MID_Y + 180, 'C / Y: CONTROLES', 22, PALETTE.yellow).setOrigin(0, 0.5),
       ]).setDepth(20));
     } else {
+      this.controls?.close();
       resumeChant();
       resumeLoops();
       this.tweens.resumeAll();
       this.pauseLayer.destroy();
     }
+  }
+
+  // Controls panel over the pause screen (C / Y or its button).
+  openControls() {
+    if (this.controls) return;
+    this.controls = this.asUI(() => controlsPanel(this, () => { this.controls = null; }));
   }
 
   // Q / Select while paused: leave the league match (as a loss) or the friendly.
@@ -689,7 +698,13 @@ export default class GameScene extends Phaser.Scene {
       return;
     }
     if (this.paused) {
-      if (pressed(k.esc) || pressed(k.enter) || padPressed(BTN.START, BTN.A)) this.togglePause();
+      // The controls panel sits over the pause screen; close it before anything else.
+      if (this.controls) {
+        if (pressed(k.esc) || pressed(k.enter) || pressed(k.space) || pressed(k.c) || padPressed(BTN.A, BTN.B, BTN.Y, BTN.START)) this.controls.close();
+        return;
+      }
+      if (pressed(k.c) || padPressed(BTN.Y)) this.openControls();
+      else if (pressed(k.esc) || pressed(k.enter) || padPressed(BTN.START, BTN.A)) this.togglePause();
       else if (pressed(k.q) || padPressed(BTN.SELECT)) this.quitFromPause();
       return;
     }

@@ -242,6 +242,184 @@ export function soundButton(scene, x, y, scale = 1) {
   return container;
 }
 
+// Round button with a little gamepad, the twin of the sound button. Opens the controls
+// panel (the scene also opens it with the C key).
+export function controlsButton(scene, x, y, onClick, scale = 1) {
+  const r = 30;
+  const g = scene.add.graphics();
+  g.fillStyle(COLORS.ink, 1);
+  g.fillCircle(0, 5, r);
+  g.fillStyle(COLORS.purple, 1);
+  g.fillCircle(0, 0, r);
+  g.fillStyle(0xffffff, 0.22);
+  g.fillEllipse(0, -r * 0.45, r * 1.3, r * 0.6);
+  g.lineStyle(4, COLORS.ink, 1);
+  g.strokeCircle(0, 0, r);
+
+  // Gamepad: body with two grips, a cross on the left and two buttons on the right.
+  g.fillStyle(0xffffff, 1);
+  g.lineStyle(3, COLORS.ink, 1);
+  g.fillRoundedRect(-18, -9, 36, 18, 8);
+  g.strokeRoundedRect(-18, -9, 36, 18, 8);
+  for (const side of [-1, 1]) {
+    g.fillCircle(side * 12, 7, 7);
+    g.strokeCircle(side * 12, 7, 7);
+  }
+  g.fillRect(-14, -8, 28, 14); // hides the grip outlines inside the body
+  g.fillStyle(COLORS.ink, 1);
+  g.fillRect(-13, -2, 10, 3);
+  g.fillRect(-9.5, -5.5, 3, 10);
+  g.fillStyle(COLORS.p2, 1);
+  g.fillCircle(8, -2, 2.6);
+  g.fillStyle(COLORS.p1, 1);
+  g.fillCircle(13, 2, 2.6);
+
+  const container = scene.add.container(x, y, [g]).setScale(scale);
+  const zone = scene.add.zone(0, 0, r * 2 + 10, r * 2 + 10).setInteractive({ useHandCursor: true });
+  container.add(zone);
+  zone.on('pointerdown', (pointer, lx, ly, event) => {
+    event.stopPropagation();
+    onClick();
+  });
+  zone.on('pointerover', () => container.setScale(scale * 1.1));
+  zone.on('pointerout', () => container.setScale(scale));
+  return container;
+}
+
+// A keyboard key drawn as a little white keycap. Returns the parts to add to a container.
+function keycap(scene, x, y, label, w = 48) {
+  const h = 46;
+  const g = scene.add.graphics();
+  g.fillStyle(COLORS.ink, 1);
+  g.fillRoundedRect(x - w / 2, y - h / 2 + 5, w, h, 10);
+  g.fillStyle(0xd9d3f5, 1);
+  g.fillRoundedRect(x - w / 2, y - h / 2, w, h, 10);
+  g.fillStyle(0xffffff, 1);
+  g.fillRoundedRect(x - w / 2 + 4, y - h / 2 + 3, w - 8, h - 12, 8);
+  g.lineStyle(3, COLORS.ink, 1);
+  g.strokeRoundedRect(x - w / 2, y - h / 2, w, h, 10);
+  const text = scene.add.text(x, y - 3, label, {
+    fontFamily: FONTS.title, fontSize: label.length > 2 ? '14px' : '20px', color: PALETTE.ink,
+  }).setOrigin(0.5);
+  return [g, text];
+}
+
+// Four keys in the usual "inverted T": up on top, left / down / right below.
+function keyCluster(scene, x, y, [up, left, down, right]) {
+  return [
+    ...keycap(scene, x, y - 27, up),
+    ...keycap(scene, x - 52, y + 27, left),
+    ...keycap(scene, x, y + 27, down),
+    ...keycap(scene, x + 52, y + 27, right),
+  ];
+}
+
+// Round or pill-shaped gamepad button.
+function padButton(scene, x, y, label, color, w = 46) {
+  const h = 46;
+  const g = scene.add.graphics();
+  g.fillStyle(COLORS.ink, 1);
+  g.fillRoundedRect(x - w / 2, y - h / 2 + 5, w, h, h / 2);
+  g.fillStyle(color, 1);
+  g.fillRoundedRect(x - w / 2, y - h / 2, w, h, h / 2);
+  g.lineStyle(3, COLORS.ink, 1);
+  g.strokeRoundedRect(x - w / 2, y - h / 2, w, h, h / 2);
+  const text = scene.add.text(x, y, label, {
+    fontFamily: FONTS.title, fontSize: label.length > 2 ? '14px' : '20px', color: PALETTE.white,
+    stroke: PALETTE.ink, strokeThickness: 4,
+  }).setOrigin(0.5);
+  return [g, text];
+}
+
+// "CONTROLES" panel drawn over the current screen: keys for both players and the
+// joystick, drawn as keycaps and buttons. Nothing in it is animated, so it also works on
+// the pause screen (where tweens are stopped). The scene passes its key presses to
+// panel.key(code); Esc, Enter, Space or C close it, and so do a click outside and the
+// "¡LISTO!" button. Returns { container, key(code), close() }.
+export function controlsPanel(scene, onClose) {
+  const cx = GAME_W / 2;
+  const left = 60;
+  const width = GAME_W - 120;
+  const top = 150;
+  const height = 840;
+  const parts = [];
+
+  const dim = scene.add.rectangle(0, 0, GAME_W, GAME_H, COLORS.ink, 0.8).setOrigin(0).setInteractive();
+  const g = scene.add.graphics();
+  g.fillStyle(COLORS.ink, 1);
+  g.fillRoundedRect(left - 6, top + 6, width + 12, height, 28);
+  g.fillStyle(COLORS.purpleDark, 1);
+  g.fillRoundedRect(left, top, width, height, 26);
+  g.lineStyle(5, COLORS.ink, 1);
+  g.strokeRoundedRect(left, top, width, height, 26);
+  // Clicks on the panel itself land here instead of on the dim layer, which closes it.
+  const body = scene.add.zone(cx, top + height / 2, width, height).setInteractive();
+  parts.push(dim, g, body, titleText(scene, cx, top + 62, 'CONTROLES', 50));
+
+  // One section per way of playing: a coloured header and three or four controls, each
+  // with a yellow caption under it.
+  const caption = (x, y, text) => uiText(scene, x, y, text, 15, PALETTE.yellow);
+  const header = (y, text, color) => {
+    const bar = scene.add.graphics();
+    bar.fillStyle(color, 1);
+    bar.fillRoundedRect(left + 24, y - 18, width - 48, 36, 12);
+    bar.lineStyle(3, COLORS.ink, 1);
+    bar.strokeRoundedRect(left + 24, y - 18, width - 48, 36, 12);
+    return [bar, uiText(scene, cx, y, text, 18)];
+  };
+  const col = [cx - 200, cx + 10, cx + 200];
+
+  let y = top + 140;
+  parts.push(...header(y, 'JUGADOR 1  ·  AZUL  ·  ABAJO', COLORS.p1));
+  parts.push(...keyCluster(scene, col[0], y + 86, ['W', 'A', 'S', 'D']), caption(col[0], y + 152, 'MOVERSE'));
+  parts.push(...keycap(scene, col[1], y + 113, 'ESPACIO', 150), caption(col[1], y + 152, 'PATEAR'));
+  parts.push(...keycap(scene, col[2], y + 113, 'SHIFT IZQ', 120), caption(col[2], y + 152, 'DASH'));
+
+  y += 210;
+  parts.push(...header(y, 'JUGADOR 2  ·  ROJO  ·  ARRIBA', COLORS.p2));
+  parts.push(...keyCluster(scene, col[0], y + 86, ['↑', '←', '↓', '→']), caption(col[0], y + 152, 'MOVERSE'));
+  parts.push(...keycap(scene, col[1], y + 113, 'ENTER', 120), caption(col[1], y + 152, 'PATEAR'));
+  parts.push(...keycap(scene, col[2], y + 113, 'SHIFT DER', 120), caption(col[2], y + 152, 'DASH'));
+
+  y += 210;
+  parts.push(...header(y, 'JOYSTICK', COLORS.purple));
+  const pad = [cx - 225, cx - 75, cx + 75, cx + 225];
+  const stick = scene.add.graphics();
+  stick.fillStyle(COLORS.ink, 1);
+  stick.fillCircle(pad[0], y + 82, 28);
+  stick.fillStyle(0x55507a, 1);
+  stick.fillCircle(pad[0], y + 78, 24);
+  stick.fillStyle(0xffffff, 1);
+  stick.fillCircle(pad[0], y + 74, 14);
+  stick.lineStyle(3, COLORS.ink, 1);
+  stick.strokeCircle(pad[0], y + 74, 14);
+  parts.push(stick, caption(pad[0], y + 128, 'STICK O CRUZ: MOVERSE'));
+  parts.push(...padButton(scene, pad[1], y + 78, 'A', 0x3dd68c), caption(pad[1], y + 128, 'PATEAR'));
+  parts.push(...padButton(scene, pad[2], y + 78, 'R1', COLORS.p1, 64), caption(pad[2], y + 128, 'DASH'));
+  parts.push(...padButton(scene, pad[3], y + 78, 'START', COLORS.pink, 88), caption(pad[3], y + 128, 'PAUSA'));
+
+  parts.push(uiText(scene, cx, top + height - 118, 'Esc / Start: pausa  ·  M: sonido  ·  C: controles', 16, '#bfb3ff'));
+  const ok = button(scene, cx, top + height - 60, 240, 62, '¡LISTO!', () => close(), 26);
+  ok.setActive(true);
+  parts.push(ok.container, ok.zone);
+
+  const container = scene.add.container(0, 0, parts).setDepth(900);
+  let closed = false;
+  const close = () => {
+    if (closed) return;
+    closed = true;
+    sfx.select();
+    container.destroy();
+    onClose?.();
+  };
+  dim.on('pointerdown', close);
+  const key = (code) => {
+    if (['Escape', 'Enter', 'Space', 'KeyC', 'Tab'].includes(code)) close();
+  };
+  sfx.select();
+  return { container, key, close };
+}
+
 // A purple ribbon with notched tails, like a sports title card. Returns a container
 // centred on (x, y) holding the ribbon and its label.
 export function ribbon(scene, x, y, label, width = 420, height = 58) {

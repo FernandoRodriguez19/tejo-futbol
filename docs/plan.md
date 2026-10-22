@@ -50,6 +50,8 @@
   elegible (48 a 4), gol de oro en eliminación, simular si te eliminan.
 - [x] 15. Selector de clubes estilo FIFA (igual al de la copa) para la liga y los
   amistosos. Menú con dos botones (Partido normal y Torneo) que abren sus dos opciones.
+- [x] 16. Los controles salen del menú y pasan a un panel con teclas dibujadas (botón del
+  joystick arriba a la izquierda, o C / Y), también disponible en la pausa.
 
 ## Ideas para después
 - Controles táctiles para celular.
