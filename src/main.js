@@ -4,6 +4,7 @@ import MenuScene from './scenes/MenuScene.js';
 import GameScene from './scenes/GameScene.js';
 import TeamSelectScene from './scenes/TeamSelectScene.js';
 import LeagueScene from './scenes/LeagueScene.js';
+import OptionsScene from './scenes/OptionsScene.js';
 import SoundScene from './scenes/SoundScene.js';
 import CupScene from './scenes/CupScene.js';
 import NationSelectScene from './scenes/NationSelectScene.js';
@@ -33,8 +34,9 @@ function startGame() {
       mode: Phaser.Scale.FIT,
       autoCenter: Phaser.Scale.CENTER_BOTH,
     },
-    // SoundScene goes last so it's drawn over whichever screen opened it.
-    scene: [MenuScene, GameScene, TeamSelectScene, LeagueScene, CupScene, NationSelectScene, SoundScene],
+    // The options and sound panels go last so they're drawn over whichever screen opened
+    // them (the sound panel can open from the options one).
+    scene: [MenuScene, GameScene, TeamSelectScene, LeagueScene, CupScene, NationSelectScene, OptionsScene, SoundScene],
   });
 
   // Handy for poking at the game from the browser console while developing.

@@ -2,7 +2,7 @@ import * as Phaser from 'phaser';
 import { GAME_W, GAME_H, COLORS, PALETTE, FONTS } from '../config.js';
 import { makeTextures } from '../art.js';
 import { flagTexture } from '../cup/flags.js';
-import { titleText, uiText, ribbon, button, goTo, wipeIn, playMenuMusic, soundButton, levelLabel } from '../ui.js';
+import { titleText, uiText, ribbon, button, goTo, wipeIn, playMenuMusic, optionsButton, levelLabel } from '../ui.js';
 import { sfx, unlockAudio } from '../sound.js';
 import { pickKits } from '../league/teams.js';
 import { NATION_BY_ID } from '../cup/nations.js';
@@ -47,7 +47,7 @@ export default class CupScene extends Phaser.Scene {
     if (!this.views.includes(this.view)) this.view = this.views[0];
 
     this.drawHeader();
-    soundButton(this, GAME_W - 48, 48);
+    optionsButton(this, GAME_W - 48, 48);
     this.drawFooter();
     this.render();
 

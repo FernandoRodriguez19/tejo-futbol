@@ -60,6 +60,8 @@
   volumen separado para música, hinchada y efectos, más "silenciar todo" (M).
 - [x] 20. Dash más corto (120 ms, unos 130 px). En los menús, un control que aparece dos
   veces (por ejemplo con Steam abierto) ya no aprieta ni mueve dos veces.
+- [x] 21. Un solo botón OPCIONES (engranaje) en todas las pantallas, con Controles y
+  Sonido adentro. En la pausa también quedan juntos en "Opciones".
 
 ## Ideas para después
 - Controles táctiles para celular.

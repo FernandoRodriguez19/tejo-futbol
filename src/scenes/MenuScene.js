@@ -2,7 +2,7 @@ import * as Phaser from 'phaser';
 import { GAME_W, COLORS, PALETTE, FONTS } from '../config.js';
 import { makeTextures, SPRITE_SCALE } from '../art.js';
 import {
-  titleText, uiText, ribbon, button, goTo, wipeIn, playMenuMusic, soundButton, controlsButton, controlsPanel,
+  titleText, uiText, ribbon, button, goTo, wipeIn, playMenuMusic, optionsButton, openOptions,
 } from '../ui.js';
 import { unlockAudio, sfx } from '../sound.js';
 import { loadLeague, totalRounds } from '../league/league.js';
@@ -69,22 +69,17 @@ export default class MenuScene extends Phaser.Scene {
     this.backBtn = button(this, CX, SUB.back, 280, 62, '◀  VOLVER', () => this.showPage('main'), 24);
     this.backBtn.zone.on('pointerover', () => this.setFocus('back'));
 
-    soundButton(this, GAME_W - 52, 52);
-    this.controls = null;
-    controlsButton(this, 52, 52, () => this.openControls());
+    optionsButton(this, GAME_W - 52, 52);
 
     uiText(this, CX, 1050, 'Flechas elegir  ·  Enter / A entrar  ·  Esc / B volver', 17);
-    uiText(this, CX, 1080, 'C / Y: controles  ·  M: sonido', 17, PALETTE.yellow);
+    uiText(this, CX, 1080, 'O / Y: opciones (controles y sonido)  ·  M: silenciar', 17, PALETTE.yellow);
 
     const onKey = (event) => {
       unlockAudio();
-      if (this.controls) {
-        this.controls.key(event.code);
-        return;
-      }
-      if (event.code === 'KeyC' || event.code === 'Tab') {
+      // Y on the joystick (sent as Tab) also opens the options; O does it from the button.
+      if (event.code === 'Tab') {
         event.preventDefault();
-        this.openControls();
+        openOptions(this);
         return;
       }
       const dir = { ArrowUp: 'up', KeyW: 'up', ArrowDown: 'down', KeyS: 'down', ArrowLeft: 'left', KeyA: 'left', ArrowRight: 'right', KeyD: 'right' }[event.code];
@@ -212,11 +207,6 @@ export default class MenuScene extends Phaser.Scene {
       targets: container, scale: active ? 1.05 : 1, angle: active ? -1.5 : 0, alpha: 1,
       duration: 160, ease: 'Back.Out',
     });
-  }
-
-  openControls() {
-    if (this.controls || this.leaving) return;
-    this.controls = controlsPanel(this, () => { this.controls = null; });
   }
 
   // ---------- pages ----------

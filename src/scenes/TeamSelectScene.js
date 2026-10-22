@@ -2,7 +2,7 @@ import * as Phaser from 'phaser';
 import { GAME_W, GAME_H, COLORS, PALETTE } from '../config.js';
 import { makeTextures, kitTexture } from '../art.js';
 import {
-  titleText, uiText, button, goTo, wipeIn, playMenuMusic, soundButton, sportsCard, levelBadge, levelOf, starsOf,
+  titleText, uiText, button, goTo, wipeIn, playMenuMusic, optionsButton, sportsCard, levelBadge, levelOf, starsOf,
 } from '../ui.js';
 import { sfx, unlockAudio } from '../sound.js';
 import { TEAMS, pickKits } from '../league/teams.js';
@@ -52,7 +52,7 @@ export default class TeamSelectScene extends Phaser.Scene {
 
     this.titleTxt = titleText(this, CX, 72, '', 50).setAngle(-3);
     this.subTxt = uiText(this, CX, 132, '', 19, PALETTE.yellow);
-    soundButton(this, GAME_W - 48, 48);
+    optionsButton(this, GAME_W - 48, 48);
 
     this.makeCard();
     this.makeStrip();

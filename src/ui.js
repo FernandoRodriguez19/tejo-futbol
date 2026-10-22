@@ -2,7 +2,7 @@
 // the striped wipe used between screens.
 import { COLORS, PALETTE, FONTS, GAME_W, GAME_H, BOT_LEVELS } from './config.js';
 import { startLoop } from './music.js';
-import { unlockAudio, sfx, iconLevel, toggleMute, onVolumeChange } from './sound.js';
+import { unlockAudio, sfx, isMuted, toggleMute, onVolumeChange } from './sound.js';
 
 // Menu screens share one music loop that keeps going between them. Browsers only allow
 // audio after a key press or click, so it's retried on the first one.
@@ -255,6 +255,29 @@ export function drawExitIcon(g) {
   g.strokePoints(arrow, true);
 }
 
+// Gear (options): a toothed wheel with a hole in the middle.
+export function drawGearIcon(g) {
+  const teeth = 8;
+  const outer = 17;
+  const inner = 12.5;
+  const pts = [];
+  for (let i = 0; i < teeth * 2; i++) {
+    // Each tooth is a flat-topped bump: two points on the outer radius, two on the inner.
+    const a0 = (i / (teeth * 2)) * Math.PI * 2;
+    const a1 = ((i + 1) / (teeth * 2)) * Math.PI * 2;
+    const rad = i % 2 ? inner : outer;
+    pts.push({ x: Math.cos(a0 + 0.06) * rad, y: Math.sin(a0 + 0.06) * rad });
+    pts.push({ x: Math.cos(a1 - 0.06) * rad, y: Math.sin(a1 - 0.06) * rad });
+  }
+  g.fillStyle(0xffffff, 1);
+  g.fillPoints(pts, true);
+  g.lineStyle(3, COLORS.ink, 1);
+  g.strokePoints(pts, true);
+  g.fillStyle(COLORS.purpleDark, 1);
+  g.fillCircle(0, 0, 5.5);
+  g.strokeCircle(0, 0, 5.5);
+}
+
 // Wide button with a round icon on the left, a title and an optional small line under
 // it. Yellow when active; `color` otherwise. Returns { container, zone, setActive,
 // setLabel(title, sub), icon } (icon: the Graphics to draw the icon on).
@@ -311,33 +334,45 @@ export function openSoundPanel(scene) {
   scene.scene.pause();
 }
 
-// Round speaker button: a click opens the sound panel (or runs `onOpen` instead); the M
-// key mutes or unmutes everything. The icon shows the sound waves, or a red cross when
-// muted.
-export function soundButton(scene, x, y, scale = 1, onOpen = () => openSoundPanel(scene)) {
+// Opens the options panel (OptionsScene: controls and sound) over `scene`, which stays
+// paused until it closes.
+export function openOptions(scene) {
+  if (scene.scene.isActive('Options')) return;
+  unlockAudio();
+  sfx.confirm();
+  scene.scene.launch('Options', { from: scene.scene.key });
+  scene.scene.pause();
+}
+
+// Round "OPCIONES" button with a gear: a click (or the O key) opens the options panel,
+// or runs `onOpen` instead. It also handles the M key, which mutes or unmutes everything;
+// while muted a little red speaker badge shows on the gear.
+export function optionsButton(scene, x, y, scale = 1, onOpen = () => openOptions(scene)) {
   const r = 30;
   const g = scene.add.graphics();
-  const container = scene.add.container(x, y, [g]).setScale(scale);
+  const badge = scene.add.graphics({ x: r * 0.72, y: r * 0.72 });
+  const container = scene.add.container(x, y, [g, badge]).setScale(scale);
 
-  const draw = () => {
-    const level = iconLevel();
-    g.clear();
-    g.fillStyle(COLORS.ink, 1);
-    g.fillCircle(0, 5, r);
-    g.fillStyle(level ? COLORS.purple : COLORS.purpleDark, 1);
-    g.fillCircle(0, 0, r);
-    g.fillStyle(0xffffff, 0.22);
-    g.fillEllipse(0, -r * 0.45, r * 1.3, r * 0.6);
-    g.lineStyle(4, COLORS.ink, 1);
-    g.strokeCircle(0, 0, r);
-    drawSpeakerIcon(g, level);
-  };
+  g.fillStyle(COLORS.ink, 1);
+  g.fillCircle(0, 5, r);
+  g.fillStyle(COLORS.purple, 1);
+  g.fillCircle(0, 0, r);
+  g.fillStyle(0xffffff, 0.22);
+  g.fillEllipse(0, -r * 0.45, r * 1.3, r * 0.6);
+  g.lineStyle(4, COLORS.ink, 1);
+  g.strokeCircle(0, 0, r);
+  drawGearIcon(g);
 
-  const mute = () => {
-    unlockAudio();
-    toggleMute();
-    sfx.select();
-    scene.tweens.add({ targets: container, scale: { from: scale * 1.25, to: scale }, duration: 220, ease: 'Back.Out' });
+  const drawBadge = () => {
+    badge.clear();
+    if (!isMuted()) return;
+    badge.fillStyle(COLORS.ink, 1);
+    badge.fillCircle(1, 2, 12);
+    badge.fillStyle(COLORS.p2, 1);
+    badge.fillCircle(0, 0, 12);
+    badge.lineStyle(3, 0xffffff, 1);
+    badge.lineBetween(-5, -5, 5, 5);
+    badge.lineBetween(-5, 5, 5, -5);
   };
 
   const zone = scene.add.zone(0, 0, r * 2 + 10, r * 2 + 10).setInteractive({ useHandCursor: true });
@@ -350,38 +385,17 @@ export function soundButton(scene, x, y, scale = 1, onOpen = () => openSoundPane
   });
   zone.on('pointerover', () => container.setScale(scale * 1.1));
   zone.on('pointerout', () => container.setScale(scale));
-  scene.input.keyboard.on('keydown-M', mute);
-
-  const stop = onVolumeChange(draw);
-  scene.events.once('shutdown', stop);
-  draw();
-  return container;
-}
-
-// Round button with a little gamepad, the twin of the sound button. Opens the controls
-// panel (the scene also opens it with the C key).
-export function controlsButton(scene, x, y, onClick, scale = 1) {
-  const r = 30;
-  const g = scene.add.graphics();
-  g.fillStyle(COLORS.ink, 1);
-  g.fillCircle(0, 5, r);
-  g.fillStyle(COLORS.purple, 1);
-  g.fillCircle(0, 0, r);
-  g.fillStyle(0xffffff, 0.22);
-  g.fillEllipse(0, -r * 0.45, r * 1.3, r * 0.6);
-  g.lineStyle(4, COLORS.ink, 1);
-  g.strokeCircle(0, 0, r);
-  drawGamepadIcon(g);
-
-  const container = scene.add.container(x, y, [g]).setScale(scale);
-  const zone = scene.add.zone(0, 0, r * 2 + 10, r * 2 + 10).setInteractive({ useHandCursor: true });
-  container.add(zone);
-  zone.on('pointerdown', (pointer, lx, ly, event) => {
-    event.stopPropagation();
-    onClick();
+  scene.input.keyboard.on('keydown-O', onOpen);
+  scene.input.keyboard.on('keydown-M', () => {
+    unlockAudio();
+    toggleMute();
+    sfx.select();
+    scene.tweens.add({ targets: container, scale: { from: scale * 1.25, to: scale }, duration: 220, ease: 'Back.Out' });
   });
-  zone.on('pointerover', () => container.setScale(scale * 1.1));
-  zone.on('pointerout', () => container.setScale(scale));
+
+  const stop = onVolumeChange(drawBadge);
+  scene.events.once('shutdown', stop);
+  drawBadge();
   return container;
 }
 

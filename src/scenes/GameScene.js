@@ -6,10 +6,10 @@ import {
 } from '../config.js';
 import { makeTextures, kitTexture, SPRITE_SCALE } from '../art.js';
 import {
-  titleText, uiText, ribbon, goTo, wipeIn, soundButton, openSoundPanel, controlsPanel, iconButton,
-  drawPlayIcon, drawGamepadIcon, drawSpeakerIcon, drawExitIcon,
+  titleText, uiText, ribbon, goTo, wipeIn, optionsButton, openOptions, iconButton,
+  drawPlayIcon, drawGearIcon, drawExitIcon,
 } from '../ui.js';
-import { sfx, unlockAudio, getChannel, isMuted, iconLevel, onVolumeChange } from '../sound.js';
+import { sfx, unlockAudio } from '../sound.js';
 import {
   playChant, stopChant, pauseChant, resumeChant, stopLoop, pauseLoops, resumeLoops, playSound,
   startMatchMusic, changeMatchTrack, stopMatchMusic,
@@ -133,9 +133,9 @@ export default class GameScene extends Phaser.Scene {
     this.timeLeft = m ? MATCH_SECONDS * 1000 : null;
     this.paused = false;
     this.asUI(() => this.makeHud());
-    // Sound button in the bottom corner, above the pause screen so it works there too.
-    // Its sound panel opens over the pause screen, so the match stops first.
-    this.asUI(() => soundButton(this, GAME_W - 40, GAME_H - 38, 0.85, () => this.openSound()).setDepth(25));
+    // Options button (gear) in the bottom corner, above the pause screen: it pauses the
+    // match and opens the options over the pause menu.
+    this.asUI(() => optionsButton(this, GAME_W - 40, GAME_H - 38, 0.85, () => this.openOptionsFromMatch()).setDepth(25));
 
     // Juice state.
     this.fans = makeFans();
@@ -519,8 +519,6 @@ export default class GameScene extends Phaser.Scene {
       this.tweens.pauseAll();
       this.pauseLayer = this.asUI(() => this.makePauseMenu()).setDepth(20);
     } else {
-      this.controls?.close();
-      this.stopPauseVolume?.();
       resumeChant();
       resumeLoops();
       this.tweens.resumeAll();
@@ -534,7 +532,7 @@ export default class GameScene extends Phaser.Scene {
     const cx = CENTER_X;
     const w = 560;
     const top = 220;
-    const height = 700;
+    const height = 600;
     const parts = [this.add.rectangle(0, 0, GAME_W, GAME_H, COLORS.ink, 0.7).setOrigin(0)];
 
     const card = this.add.graphics();
@@ -570,8 +568,7 @@ export default class GameScene extends Phaser.Scene {
     const quitSub = this.match ? 'Perdés el partido 0-3' : 'Se termina este partido';
     const items = [
       { title: 'SEGUIR JUGANDO', sub: 'Esc / Start', color: 0x2fb36c, drawIcon: drawPlayIcon, action: () => this.togglePause() },
-      { title: 'CONTROLES', sub: 'C / Y', drawIcon: drawGamepadIcon, action: () => this.openControls() },
-      { title: 'SONIDO', sub: this.volumeSummary(), drawIcon: (g) => drawSpeakerIcon(g, iconLevel()), action: () => this.openSound() },
+      { title: 'OPCIONES', sub: 'Controles y sonido  ·  O / Y', drawIcon: drawGearIcon, action: () => openOptions(this) },
       { title: quitLabel, sub: quitSub, color: COLORS.p2, drawIcon: drawExitIcon, action: () => this.quitFromPause() },
     ];
     this.pauseButtons = items.map((item, i) => {
@@ -583,33 +580,18 @@ export default class GameScene extends Phaser.Scene {
     });
     parts.push(uiText(this, cx, top + height - 30, '↑ ↓ elegir  ·  Enter / A: aceptar', 15, '#bfb3ff'));
 
-    // The sound button (or M) can change the volume while paused: keep the row in sync.
-    const sound = this.pauseButtons[2];
-    this.stopPauseVolume = onVolumeChange(() => {
-      sound.icon.clear();
-      drawSpeakerIcon(sound.icon, iconLevel());
-      sound.setLabel('SONIDO', this.volumeSummary());
-    });
-
     this.pauseIndex = 0;
     this.pauseFocus(0, true);
     return this.add.container(0, 0, parts);
   }
 
-  // "Música 80 % · Hinchada 50 % · Efectos 100 %" under the pause menu's sound button.
-  volumeSummary() {
-    if (isMuted()) return 'Todo silenciado (M)';
-    const pct = (ch) => `${Math.round(getChannel(ch) * 100)} %`;
-    return `Música ${pct('music')}  ·  Hinchada ${pct('crowd')}  ·  Efectos ${pct('sfx')}`;
-  }
-
-  // Sound panel (the pause menu's button or the speaker in the corner): pauses first.
-  openSound() {
+  // The gear in the corner (or O): pauses first, then opens the options over the pause menu.
+  openOptionsFromMatch() {
     if (!this.paused) {
       if (this.state === 'over') return;
       this.togglePause();
     }
-    openSoundPanel(this);
+    openOptions(this);
   }
 
   pauseFocus(i, silent = false) {
@@ -621,12 +603,6 @@ export default class GameScene extends Phaser.Scene {
   pauseAction(i) {
     this.pauseFocus(i, true);
     this.pauseButtons[i].action();
-  }
-
-  // Controls panel over the pause screen (C / Y or its button).
-  openControls() {
-    if (this.controls) return;
-    this.controls = this.asUI(() => controlsPanel(this, () => { this.controls = null; }));
   }
 
   // Q / Select while paused: leave the league match (as a loss) or the friendly.
@@ -792,18 +768,13 @@ export default class GameScene extends Phaser.Scene {
       return;
     }
     if (this.paused) {
-      // The controls panel sits over the pause screen; close it before anything else.
-      if (this.controls) {
-        if (pressed(k.esc) || pressed(k.enter) || pressed(k.space) || pressed(k.c) || padPressed(BTN.A, BTN.B, BTN.Y, BTN.START)) this.controls.close();
-        return;
-      }
       // Pause menu: up/down (keys, cross or stick) pick a button, Enter / A presses it.
       const stickY = pads.map((p) => p.move.y).find((y) => Math.abs(y) > 0.5) ?? 0;
       const stickDir = Math.sign(stickY);
       const stickMoved = stickDir !== 0 && stickDir !== this.pauseStick;
       this.pauseStick = stickDir;
       const n = this.pauseButtons.length;
-      if (pressed(k.c) || padPressed(BTN.Y)) this.openControls();
+      if (pressed(k.c) || padPressed(BTN.Y)) openOptions(this);
       else if (pressed(k.esc) || padPressed(BTN.START, BTN.B)) this.togglePause();
       else if (pressed(k.enter) || pressed(k.space) || padPressed(BTN.A)) this.pauseAction(this.pauseIndex);
       else if (pressed(k.q) || padPressed(BTN.SELECT)) this.quitFromPause();
