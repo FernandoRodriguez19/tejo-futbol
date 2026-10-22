@@ -48,6 +48,8 @@
 - [x] 13. Menú en dos secciones (Partido normal y Campeonato).
 - [x] 14. Copa de naciones: 48 selecciones, fase de grupos o eliminación directa, tamaño
   elegible (48 a 4), gol de oro en eliminación, simular si te eliminan.
+- [x] 15. Selector de clubes estilo FIFA (igual al de la copa) para la liga y los
+  amistosos. Menú con dos botones (Partido normal y Torneo) que abren sus dos opciones.
 
 ## Ideas para después
 - Controles táctiles para celular.

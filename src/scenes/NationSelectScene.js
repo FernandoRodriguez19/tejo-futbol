@@ -1,7 +1,9 @@
 import * as Phaser from 'phaser';
 import { GAME_W, GAME_H, COLORS, PALETTE, FONTS } from '../config.js';
 import { makeTextures, kitTexture } from '../art.js';
-import { titleText, uiText, button, goTo, wipeIn, playMenuMusic, soundButton } from '../ui.js';
+import {
+  titleText, uiText, button, goTo, wipeIn, playMenuMusic, soundButton, sportsCard, levelBadge, levelOf, starsOf,
+} from '../ui.js';
 import { sfx, unlockAudio } from '../sound.js';
 import { NATION_BY_ID, CONFEDERATIONS } from '../cup/nations.js';
 import { flagTexture } from '../cup/flags.js';
@@ -92,39 +94,13 @@ export default class NationSelectScene extends Phaser.Scene {
   }
 
   makeCard() {
-    const g = this.add.graphics();
-    const { x, y, w, h } = CARD;
-    g.fillStyle(COLORS.ink, 1);
-    g.fillRoundedRect(x, y + 10, w, h, 30);
-    g.fillStyle(COLORS.purpleDark, 1);
-    g.fillRoundedRect(x, y, w, h, 30);
-    // Diagonal light band, like a sports card.
-    g.fillStyle(COLORS.purple, 1);
-    g.fillPoints([
-      { x: x + w * 0.38, y }, { x: x + w * 0.78, y },
-      { x: x + w * 0.52, y: y + h }, { x: x + w * 0.12, y: y + h },
-    ], true);
-    g.fillStyle(0xffffff, 0.12);
-    g.fillRoundedRect(x + 14, y + 12, w - 28, 50, 20);
-    g.lineStyle(6, COLORS.ink, 1);
-    g.strokeRoundedRect(x, y, w, h, 30);
+    sportsCard(this, CARD);
 
     // Pieces that change with the selection.
     this.flag = this.add.image(CX - 70, 340, flagTexture(this, 'argentina')).setAngle(-4);
     this.kit = this.add.image(CX + 225, 360, kitTexture(this, NATION_BY_ID.argentina.home, '10')).setScale(1.15);
     this.tweens.add({ targets: this.kit, y: 348, duration: 700, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
-
-    // Level badge.
-    const badge = this.add.graphics();
-    badge.fillStyle(COLORS.ink, 1);
-    badge.fillCircle(3, 5, 52);
-    badge.fillStyle(COLORS.yellow, 1);
-    badge.fillCircle(0, 0, 52);
-    badge.lineStyle(5, COLORS.ink, 1);
-    badge.strokeCircle(0, 0, 52);
-    this.levelText = this.add.text(0, -6, '', { fontFamily: FONTS.title, fontSize: '40px', color: PALETTE.ink }).setOrigin(0.5);
-    const levelLabel = this.add.text(0, 30, 'NIVEL', { fontFamily: FONTS.ui, fontStyle: '900', fontSize: '14px', color: PALETTE.ink }).setOrigin(0.5);
-    this.badge = this.add.container(CARD.x + 78, CARD.y + 84, [badge, this.levelText, levelLabel]).setAngle(-8);
+    this.badge = levelBadge(this, CARD.x + 78, CARD.y + 84);
 
     this.nameText = titleText(this, CX, 520, '', 54);
     this.starsText = uiText(this, CX, 580, '', 30, PALETTE.yellow);
@@ -235,9 +211,8 @@ export default class NationSelectScene extends Phaser.Scene {
     const name = n.name.toUpperCase();
     this.nameText.setText(name).setFontSize(name.length > 12 ? 44 : 54);
     this.chooseBtn.container.list[1].setText(`ELEGIR ${n.short}`);
-    const stars = Math.max(1, Math.round(n.strength * 5));
-    this.starsText.setText('★'.repeat(stars) + '☆'.repeat(5 - stars));
-    this.levelText.setText(String(Math.round(55 + n.strength * 42)));
+    this.starsText.setText(starsOf(n.strength));
+    this.badge.setLevel(levelOf(n.strength));
 
     this.cupsLayer.removeAll(true);
     if (n.titles) {
@@ -251,11 +226,9 @@ export default class NationSelectScene extends Phaser.Scene {
     }
 
     // Little pop when the nation changes.
-    this.tweens.killTweensOf([this.flag, this.badge]);
+    this.tweens.killTweensOf(this.flag);
     this.flag.setScale(0.85);
     this.tweens.add({ targets: this.flag, scale: 1, duration: 260, ease: 'Back.Out' });
-    this.badge.setScale(0.6);
-    this.tweens.add({ targets: this.badge, scale: 1, duration: 300, ease: 'Back.Out' });
   }
 
   // ---------- cup options ----------

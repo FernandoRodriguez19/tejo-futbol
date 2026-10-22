@@ -93,6 +93,58 @@ export function uiText(scene, x, y, text, size, color = PALETTE.white) {
   }).setOrigin(0.5);
 }
 
+// Big FIFA-style card background (dark purple with a diagonal light band), used by the
+// team and nation pickers. rect: { x, y, w, h } (top-left corner and size).
+export function sportsCard(scene, { x, y, w, h }) {
+  const g = scene.add.graphics();
+  g.fillStyle(COLORS.ink, 1);
+  g.fillRoundedRect(x, y + 10, w, h, 30);
+  g.fillStyle(COLORS.purpleDark, 1);
+  g.fillRoundedRect(x, y, w, h, 30);
+  g.fillStyle(COLORS.purple, 1);
+  g.fillPoints([
+    { x: x + w * 0.38, y }, { x: x + w * 0.78, y },
+    { x: x + w * 0.52, y: y + h }, { x: x + w * 0.12, y: y + h },
+  ], true);
+  g.fillStyle(0xffffff, 0.12);
+  g.fillRoundedRect(x + 14, y + 12, w - 28, 50, 20);
+  g.lineStyle(6, COLORS.ink, 1);
+  g.strokeRoundedRect(x, y, w, h, 30);
+  return g;
+}
+
+// Round yellow "NIVEL" badge for the pickers. Returns { container, setLevel(n) }; the
+// number pops in every time it changes.
+export function levelBadge(scene, x, y) {
+  const g = scene.add.graphics();
+  g.fillStyle(COLORS.ink, 1);
+  g.fillCircle(3, 5, 52);
+  g.fillStyle(COLORS.yellow, 1);
+  g.fillCircle(0, 0, 52);
+  g.lineStyle(5, COLORS.ink, 1);
+  g.strokeCircle(0, 0, 52);
+  const text = scene.add.text(0, -6, '', { fontFamily: FONTS.title, fontSize: '40px', color: PALETTE.ink }).setOrigin(0.5);
+  const label = scene.add.text(0, 30, 'NIVEL', { fontFamily: FONTS.ui, fontStyle: '900', fontSize: '14px', color: PALETTE.ink }).setOrigin(0.5);
+  const container = scene.add.container(x, y, [g, text, label]).setAngle(-8);
+  const setLevel = (n) => {
+    text.setText(String(n));
+    scene.tweens.killTweensOf(container);
+    container.setScale(0.6);
+    scene.tweens.add({ targets: container, scale: 1, duration: 300, ease: 'Back.Out' });
+  };
+  return { container, setLevel };
+}
+
+// Strength (0..1) as the 55-97 "level" number and 1-5 stars the pickers show.
+export function levelOf(strength) {
+  return Math.round(55 + strength * 42);
+}
+
+export function starsOf(strength) {
+  const stars = Math.max(1, Math.round(strength * 5));
+  return '★'.repeat(stars) + '☆'.repeat(5 - stars);
+}
+
 // Chunky rounded button (purple, yellow when active). Returns { container, setActive }.
 export function button(scene, x, y, w, h, label, onClick, fontSize = 26) {
   const bg = scene.add.graphics();
