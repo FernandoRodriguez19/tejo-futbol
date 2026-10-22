@@ -175,14 +175,14 @@ export default class CupScene extends Phaser.Scene {
     if (!m) {
       // Knocked out: play out the rest of the cup.
       simulateToEnd(c);
-      sfx.kickoff();
+      sfx.confirm();
       goTo(this, 'Cup', { view: 'final' });
       return;
     }
     const home = NATION_BY_ID[m.home];
     const away = NATION_BY_ID[m.away];
     const kits = pickKits(home, away);
-    sfx.kickoff();
+    sfx.confirm();
     goTo(this, 'Game', {
       mode: 'league',
       match: {
@@ -424,14 +424,14 @@ export default class CupScene extends Phaser.Scene {
 
   closeModal() {
     if (!this.modal) return;
-    sfx.select();
+    sfx.back();
     for (const part of this.modal.parts) part.destroy();
     this.modal = null;
   }
 
   confirmReset() {
     clearCup();
-    sfx.kickoff();
+    sfx.confirm();
     goTo(this, 'NationSelect');
   }
 }

@@ -5,40 +5,90 @@ import { AUDIO } from './config.js';
 let ctx = null;
 let bus = null; // boost + limiter every effect plays through
 
-// ---------- master volume (shared with music.js) ----------
+// ---------- volume channels (shared with music.js) ----------
 
-// The sound button cycles through these levels; the choice is remembered.
-export const VOLUME_STEPS = [1, 0.5, 0];
-const VOLUME_KEY = 'tejo-futbol-volume';
-let master = loadVolume();
+// Three volumes the player sets in the sound panel (0..1, in steps of 10 %), plus a
+// "mute everything" switch (M key). All remembered in the browser.
+//   music: menu music and the match background tracks
+//   crowd: chants, the goal shout and the "uuuh" (the stadium atmosphere)
+//   sfx:   every synthesized effect (kicks, bounces, buttons...)
+export const CHANNELS = ['music', 'crowd', 'sfx'];
+const AUDIO_KEY = 'tejo-futbol-audio';
+const OLD_VOLUME_KEY = 'tejo-futbol-volume'; // the single volume of earlier versions
+const settings = loadAudio();
 const volumeListeners = new Set();
 
-function loadVolume() {
+function loadAudio() {
+  const defaults = { music: 1, crowd: 1, sfx: 1, muted: false };
   try {
-    const saved = localStorage.getItem(VOLUME_KEY);
-    return saved !== null && VOLUME_STEPS.includes(Number(saved)) ? Number(saved) : 1;
+    const saved = JSON.parse(localStorage.getItem(AUDIO_KEY));
+    if (saved) {
+      for (const ch of CHANNELS) if (typeof saved[ch] === 'number') defaults[ch] = clamp01(saved[ch]);
+      defaults.muted = !!saved.muted;
+      return defaults;
+    }
+    // Earlier versions had one volume: alto 1, medio 0.5, mudo 0. Keep what was chosen.
+    const old = localStorage.getItem(OLD_VOLUME_KEY);
+    if (old !== null) {
+      const v = Number(old);
+      if (v === 0) defaults.muted = true;
+      else if (v > 0 && v <= 1) for (const ch of CHANNELS) defaults[ch] = v;
+    }
   } catch {
-    return 1;
+    // Private mode or a broken value: start from the defaults.
   }
+  return defaults;
 }
 
-export function getVolume() {
-  return master;
-}
-
-export function cycleVolume() {
-  const i = VOLUME_STEPS.indexOf(master);
-  master = VOLUME_STEPS[(i + 1) % VOLUME_STEPS.length];
+function saveAudio() {
   try {
-    localStorage.setItem(VOLUME_KEY, String(master));
+    localStorage.setItem(AUDIO_KEY, JSON.stringify(settings));
   } catch {
-    // Private mode: the level just isn't remembered.
+    // Private mode: the levels just aren't remembered.
   }
-  volumeListeners.forEach((fn) => fn(master));
-  return master;
+  volumeListeners.forEach((fn) => fn());
 }
 
-// Calls fn(volume) on every change. Returns a function that stops listening.
+function clamp01(v) {
+  return Math.round(Math.min(1, Math.max(0, v)) * 10) / 10;
+}
+
+// The level the player chose for a channel (ignores mute), 0..1.
+export function getChannel(ch) {
+  return settings[ch];
+}
+
+export function setChannel(ch, value) {
+  settings[ch] = clamp01(value);
+  saveAudio();
+}
+
+// What a channel actually plays at right now (0 while muted).
+export function channelVolume(ch) {
+  return settings.muted ? 0 : settings[ch];
+}
+
+export function isMuted() {
+  return settings.muted;
+}
+
+export function setMuted(muted) {
+  settings.muted = muted;
+  saveAudio();
+}
+
+export function toggleMute() {
+  setMuted(!settings.muted);
+}
+
+// For the speaker icons: 0 (muted or everything at 0), 0.5 (low) or 1.
+export function iconLevel() {
+  const loudest = settings.muted ? 0 : Math.max(...CHANNELS.map((ch) => settings[ch]));
+  if (loudest === 0) return 0;
+  return loudest < 0.5 ? 0.5 : 1;
+}
+
+// Calls fn() on every change. Returns a function that stops listening.
 export function onVolumeChange(fn) {
   volumeListeners.add(fn);
   return () => volumeListeners.delete(fn);
@@ -66,8 +116,9 @@ export function unlockAudio() {
 }
 
 function tone(freq, duration, { type = 'square', volume = 0.12, slideTo = null, delay = 0 } = {}) {
-  if (!ctx || ctx.state !== 'running' || master === 0) return;
-  volume *= master;
+  const level = channelVolume('sfx');
+  if (!ctx || ctx.state !== 'running' || level === 0) return;
+  volume *= level;
   const start = ctx.currentTime + delay;
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
@@ -86,8 +137,10 @@ export const sfx = {
   wall: (ratio = 0) => tone(260 + ratio * 500, 0.05, { volume: 0.06 }),
   body: () => tone(150, 0.09, { type: 'triangle', volume: 0.2 }),
   kick: () => tone(620, 0.11, { type: 'sawtooth', volume: 0.1, slideTo: 200 }),
+  // Menus: moving between options, accepting one, and going back / leaving.
   select: () => tone(880, 0.06, { type: 'triangle', volume: 0.12 }),
-  kickoff: () => tone(440, 0.12, { type: 'triangle', volume: 0.14 }),
+  confirm: () => [660, 990].forEach((f, i) => tone(f, 0.1, { type: 'triangle', volume: 0.15, delay: i * 0.06 })),
+  back: () => [620, 410].forEach((f, i) => tone(f, 0.1, { type: 'triangle', volume: 0.14, slideTo: f * 0.85, delay: i * 0.07 })),
   // Quiet under the recorded goal shout (music.js).
   goal: () => [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.18, { type: 'triangle', volume: 0.07, delay: i * 0.09 })),
   tick: () => tone(1200, 0.05, { type: 'square', volume: 0.08 }),

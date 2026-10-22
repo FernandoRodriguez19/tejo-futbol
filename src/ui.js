@@ -2,7 +2,7 @@
 // the striped wipe used between screens.
 import { COLORS, PALETTE, FONTS, GAME_W, GAME_H, BOT_LEVELS } from './config.js';
 import { startLoop } from './music.js';
-import { unlockAudio, sfx, getVolume, cycleVolume, onVolumeChange } from './sound.js';
+import { unlockAudio, sfx, iconLevel, toggleMute, onVolumeChange } from './sound.js';
 
 // Menu screens share one music loop that keeps going between them. Browsers only allow
 // audio after a key press or click, so it's retried on the first one.
@@ -43,6 +43,7 @@ function makeWipe(scene) {
 export function goTo(scene, key, data = {}) {
   if (scene.leaving) return;
   scene.leaving = true;
+  if (key === 'Menu') sfx.back(); // every way back to the menu sounds the same
   const make = () => makeWipe(scene);
   const wipe = scene.asUI ? scene.asUI(make) : make();
   wipe.x = -WIPE_SPAN + WIPE_SKEW;
@@ -301,15 +302,25 @@ export function iconButton(scene, x, y, w, h, { title, sub = '', color = COLORS.
   return { container, zone, icon, setActive, setLabel };
 }
 
-// Round speaker button: each click (or the M key) cycles full → half → muted. The icon
-// shows the sound waves left, or a red cross when muted.
-export function soundButton(scene, x, y, scale = 1) {
+// Opens the sound settings (SoundScene) over `scene`, which stays paused until they close.
+export function openSoundPanel(scene) {
+  if (scene.scene.isActive('Sound')) return;
+  unlockAudio();
+  sfx.confirm();
+  scene.scene.launch('Sound', { from: scene.scene.key });
+  scene.scene.pause();
+}
+
+// Round speaker button: a click opens the sound panel (or runs `onOpen` instead); the M
+// key mutes or unmutes everything. The icon shows the sound waves, or a red cross when
+// muted.
+export function soundButton(scene, x, y, scale = 1, onOpen = () => openSoundPanel(scene)) {
   const r = 30;
   const g = scene.add.graphics();
   const container = scene.add.container(x, y, [g]).setScale(scale);
 
   const draw = () => {
-    const level = getVolume();
+    const level = iconLevel();
     g.clear();
     g.fillStyle(COLORS.ink, 1);
     g.fillCircle(0, 5, r);
@@ -322,9 +333,9 @@ export function soundButton(scene, x, y, scale = 1) {
     drawSpeakerIcon(g, level);
   };
 
-  const toggle = () => {
+  const mute = () => {
     unlockAudio();
-    cycleVolume();
+    toggleMute();
     sfx.select();
     scene.tweens.add({ targets: container, scale: { from: scale * 1.25, to: scale }, duration: 220, ease: 'Back.Out' });
   };
@@ -334,11 +345,12 @@ export function soundButton(scene, x, y, scale = 1) {
   // Stop the click from also counting as a click on whatever is behind the button.
   zone.on('pointerdown', (pointer, lx, ly, event) => {
     event.stopPropagation();
-    toggle();
+    container.setScale(scale);
+    onOpen();
   });
   zone.on('pointerover', () => container.setScale(scale * 1.1));
   zone.on('pointerout', () => container.setScale(scale));
-  scene.input.keyboard.on('keydown-M', toggle);
+  scene.input.keyboard.on('keydown-M', mute);
 
   const stop = onVolumeChange(draw);
   scene.events.once('shutdown', stop);
@@ -495,7 +507,7 @@ export function controlsPanel(scene, onClose) {
   const close = () => {
     if (closed) return;
     closed = true;
-    sfx.select();
+    sfx.back();
     container.destroy();
     onClose?.();
   };
@@ -503,7 +515,7 @@ export function controlsPanel(scene, onClose) {
   const key = (code) => {
     if (['Escape', 'Enter', 'Space', 'KeyC', 'Tab'].includes(code)) close();
   };
-  sfx.select();
+  sfx.confirm();
   return { container, key, close };
 }
 

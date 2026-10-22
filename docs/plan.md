@@ -56,6 +56,8 @@
   íconos: seguir, controles, sonido y salir/abandonar.
 - [x] 18. Cuatro dificultades en escalones parejos: Muy fácil (el fácil para chicos de
   antes), Fácil nuevo intermedio, Medio un poco más blando y Difícil igual.
+- [x] 19. Sonidos de aceptar y de volver/salir en todos los menús. Menú de sonido con
+  volumen separado para música, hinchada y efectos, más "silenciar todo" (M).
 
 ## Ideas para después
 - Controles táctiles para celular.

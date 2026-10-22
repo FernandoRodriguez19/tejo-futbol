@@ -236,7 +236,7 @@ export default class NationSelectScene extends Phaser.Scene {
   confirm() {
     if (this.leaving || this.setup) return;
     unlockAudio();
-    sfx.kickoff();
+    sfx.confirm();
     const nation = this.nation;
     const sizeValues = (format) => CUP_SIZES[format].map((n) => ({
       id: n,

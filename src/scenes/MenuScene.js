@@ -226,7 +226,7 @@ export default class MenuScene extends Phaser.Scene {
     if (page === this.page) return;
     const from = this.page;
     this.page = page;
-    if (!silent) sfx.select();
+    if (!silent) (page === 'main' ? sfx.back : sfx.confirm)();
 
     for (const card of Object.values(this.cards)) {
       const on = CARDS[card.key].page === page;
@@ -283,7 +283,7 @@ export default class MenuScene extends Phaser.Scene {
     unlockAudio();
     if (key === 'back') return this.showPage('main');
     if (key === 'normal' || key === 'tournament') return this.showPage(key);
-    sfx.kickoff();
+    sfx.confirm();
     // The league and the cup pick up where you left off, or start by choosing a team.
     // Friendlies start by choosing both teams; difficulty and power-ups come right after.
     if (key === 'league') goTo(this, loadLeague() ? 'League' : 'TeamSelect', {});

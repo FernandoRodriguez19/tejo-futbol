@@ -193,7 +193,7 @@ export default class TeamSelectScene extends Phaser.Scene {
       this.picks.pop();
       this.tag?.destroy();
       this.tag = null;
-      sfx.select();
+      sfx.back();
       this.updateTitles();
       return;
     }
@@ -219,7 +219,7 @@ export default class TeamSelectScene extends Phaser.Scene {
   confirm() {
     if (this.leaving || this.setup) return;
     unlockAudio();
-    sfx.kickoff();
+    sfx.confirm();
     const index = this.index;
 
     if (this.purpose === 'league') {

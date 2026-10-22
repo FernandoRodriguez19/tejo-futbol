@@ -177,7 +177,7 @@ export default class LeagueScene extends Phaser.Scene {
     const kits = pickKits(home, away);
     const rival = m.userIsHome ? away : home;
     if (this.leaving) return;
-    sfx.kickoff();
+    sfx.confirm();
     goTo(this, 'Game', {
       mode: 'league',
       match: {
@@ -249,14 +249,14 @@ export default class LeagueScene extends Phaser.Scene {
 
   closeModal() {
     if (!this.modal) return;
-    sfx.select();
+    sfx.back();
     for (const part of this.modal.parts) part.destroy();
     this.modal = null;
   }
 
   confirmReset() {
     clearLeague();
-    sfx.kickoff();
+    sfx.confirm();
     goTo(this, 'TeamSelect');
   }
 

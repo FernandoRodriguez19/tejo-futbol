@@ -20,8 +20,11 @@ Juego de fútbol 1 vs 1 en cancha vertical (mezcla de Pong, Haxball y tejo) hech
 - `src/main.js` — configuración de Phaser y lista de escenas.
 - `src/config.js` — todas las constantes del juego (tamaños, velocidades, goles para ganar).
 - `src/sound.js` — efectos de sonido generados con Web Audio (no hay archivos de audio).
-  Pasan por un refuerzo y un limitador; los volúmenes de todo el audio están en `AUDIO`
-  de `src/config.js`.
+  Pasan por un refuerzo y un limitador; los volúmenes base de todo el audio están en
+  `AUDIO` de `src/config.js`. También guarda los tres volúmenes que elige el jugador
+  (`CHANNELS`: música, hinchada, efectos; `getChannel`/`setChannel`) y el "silenciar
+  todo" (`toggleMute`, tecla M), en localStorage (`tejo-futbol-audio`). Los sonidos de
+  menú son `sfx.select` (moverse), `sfx.confirm` (aceptar) y `sfx.back` (volver/salir).
 - `src/music.js` — audio grabado (en `public/audio/`, copiado de `musica futbol tejo/`):
   música del menú (loop), música de fondo del partido (rotación de 4 temas que cambia en
   cada gol), cantos de hinchada (bajan la música mientras suenan), grito de gol y "uuuh". Los cantos se disparan desde
@@ -32,8 +35,10 @@ Juego de fútbol 1 vs 1 en cancha vertical (mezcla de Pong, Haxball y tejo) hech
   sonido (`soundButton`, también con la tecla M) y el de controles (`controlsButton` +
   `controlsPanel`, con C o Y del joystick; está en el menú y en la pausa). También
   `iconButton` (botón ancho con ícono) y los íconos `draw*Icon` que usa la pausa
-  (`GameScene.makePauseMenu`). El volumen general vive en `sound.js`
-  (`getVolume`, `cycleVolume`) y `music.js` lo aplica a todo el audio grabado.
+  (`GameScene.makePauseMenu`). `openSoundPanel(scene)` abre el menú de sonido.
+- `src/scenes/SoundScene.js` — menú de sonido (un deslizador por canal + silenciar todo).
+  Se abre encima de cualquier pantalla y la deja en pausa hasta cerrarse. `music.js`
+  aplica a cada audio grabado el volumen de su canal (`CHANNEL`).
 - `src/scenes/MenuScene.js` — menú con dos botones grandes, cada uno abre su página con
   dos tarjetas: Partido normal (vs IA, vs amigo) y Torneo (liga, copa). La dificultad y
   los power-ups se eligen en la pantalla "antes de jugar" (`src/setupPanel.js`, clase

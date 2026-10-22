@@ -114,7 +114,7 @@ export default class SetupPanel {
     for (const part of this.parts) part.destroy();
     this.opts.onClosed?.();
     if (cancelled) {
-      sfx.select();
+      sfx.back();
       this.opts.onCancel?.();
     }
   }
@@ -126,7 +126,7 @@ export default class SetupPanel {
     // Next time the screen starts with these same choices.
     this.scene.registry.set('hazards', settings.hazards);
     if (settings.difficulty && this.opts.rememberBotLevel) this.scene.registry.set('botLevel', settings.difficulty);
-    sfx.kickoff();
+    sfx.confirm();
     this.opts.onStart(settings);
   }
 }

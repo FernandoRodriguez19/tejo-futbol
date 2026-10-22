@@ -6,10 +6,10 @@ import {
 } from '../config.js';
 import { makeTextures, kitTexture, SPRITE_SCALE } from '../art.js';
 import {
-  titleText, uiText, ribbon, goTo, wipeIn, soundButton, controlsPanel, iconButton,
+  titleText, uiText, ribbon, goTo, wipeIn, soundButton, openSoundPanel, controlsPanel, iconButton,
   drawPlayIcon, drawGamepadIcon, drawSpeakerIcon, drawExitIcon,
 } from '../ui.js';
-import { sfx, unlockAudio, getVolume, cycleVolume, onVolumeChange } from '../sound.js';
+import { sfx, unlockAudio, getChannel, isMuted, iconLevel, onVolumeChange } from '../sound.js';
 import {
   playChant, stopChant, pauseChant, resumeChant, stopLoop, pauseLoops, resumeLoops, playSound,
   startMatchMusic, changeMatchTrack, stopMatchMusic,
@@ -134,7 +134,8 @@ export default class GameScene extends Phaser.Scene {
     this.paused = false;
     this.asUI(() => this.makeHud());
     // Sound button in the bottom corner, above the pause screen so it works there too.
-    this.asUI(() => soundButton(this, GAME_W - 40, GAME_H - 38, 0.85).setDepth(25));
+    // Its sound panel opens over the pause screen, so the match stops first.
+    this.asUI(() => soundButton(this, GAME_W - 40, GAME_H - 38, 0.85, () => this.openSound()).setDepth(25));
 
     // Juice state.
     this.fans = makeFans();
@@ -511,6 +512,7 @@ export default class GameScene extends Phaser.Scene {
   togglePause() {
     this.paused = !this.paused;
     this.time.paused = this.paused;
+    sfx.confirm();
     if (this.paused) {
       pauseChant();
       pauseLoops();
@@ -569,7 +571,7 @@ export default class GameScene extends Phaser.Scene {
     const items = [
       { title: 'SEGUIR JUGANDO', sub: 'Esc / Start', color: 0x2fb36c, drawIcon: drawPlayIcon, action: () => this.togglePause() },
       { title: 'CONTROLES', sub: 'C / Y', drawIcon: drawGamepadIcon, action: () => this.openControls() },
-      { title: this.volumeLabel(), sub: 'M: alto, medio o mudo', drawIcon: (g) => drawSpeakerIcon(g, getVolume()), action: () => this.cyclePauseVolume() },
+      { title: 'SONIDO', sub: this.volumeSummary(), drawIcon: (g) => drawSpeakerIcon(g, iconLevel()), action: () => this.openSound() },
       { title: quitLabel, sub: quitSub, color: COLORS.p2, drawIcon: drawExitIcon, action: () => this.quitFromPause() },
     ];
     this.pauseButtons = items.map((item, i) => {
@@ -583,10 +585,10 @@ export default class GameScene extends Phaser.Scene {
 
     // The sound button (or M) can change the volume while paused: keep the row in sync.
     const sound = this.pauseButtons[2];
-    this.stopPauseVolume = onVolumeChange((level) => {
+    this.stopPauseVolume = onVolumeChange(() => {
       sound.icon.clear();
-      drawSpeakerIcon(sound.icon, level);
-      sound.setLabel(this.volumeLabel());
+      drawSpeakerIcon(sound.icon, iconLevel());
+      sound.setLabel('SONIDO', this.volumeSummary());
     });
 
     this.pauseIndex = 0;
@@ -594,14 +596,20 @@ export default class GameScene extends Phaser.Scene {
     return this.add.container(0, 0, parts);
   }
 
-  volumeLabel() {
-    return { 1: 'SONIDO: ALTO', 0.5: 'SONIDO: MEDIO', 0: 'SONIDO: MUDO' }[getVolume()];
+  // "Música 80 % · Hinchada 50 % · Efectos 100 %" under the pause menu's sound button.
+  volumeSummary() {
+    if (isMuted()) return 'Todo silenciado (M)';
+    const pct = (ch) => `${Math.round(getChannel(ch) * 100)} %`;
+    return `Música ${pct('music')}  ·  Hinchada ${pct('crowd')}  ·  Efectos ${pct('sfx')}`;
   }
 
-  cyclePauseVolume() {
-    unlockAudio();
-    cycleVolume();
-    sfx.select();
+  // Sound panel (the pause menu's button or the speaker in the corner): pauses first.
+  openSound() {
+    if (!this.paused) {
+      if (this.state === 'over') return;
+      this.togglePause();
+    }
+    openSoundPanel(this);
   }
 
   pauseFocus(i, silent = false) {
@@ -632,6 +640,7 @@ export default class GameScene extends Phaser.Scene {
   }
 
   abandonLeagueMatch() {
+    sfx.back();
     this.togglePause();
     this.time.removeAllEvents();
     this.state = 'over';

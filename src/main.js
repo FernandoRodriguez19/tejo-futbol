@@ -4,6 +4,7 @@ import MenuScene from './scenes/MenuScene.js';
 import GameScene from './scenes/GameScene.js';
 import TeamSelectScene from './scenes/TeamSelectScene.js';
 import LeagueScene from './scenes/LeagueScene.js';
+import SoundScene from './scenes/SoundScene.js';
 import CupScene from './scenes/CupScene.js';
 import NationSelectScene from './scenes/NationSelectScene.js';
 
@@ -32,7 +33,8 @@ function startGame() {
       mode: Phaser.Scale.FIT,
       autoCenter: Phaser.Scale.CENTER_BOTH,
     },
-    scene: [MenuScene, GameScene, TeamSelectScene, LeagueScene, CupScene, NationSelectScene],
+    // SoundScene goes last so it's drawn over whichever screen opened it.
+    scene: [MenuScene, GameScene, TeamSelectScene, LeagueScene, CupScene, NationSelectScene, SoundScene],
   });
 
   // Handy for poking at the game from the browser console while developing.

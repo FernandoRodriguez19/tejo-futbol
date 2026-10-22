@@ -1,7 +1,7 @@
 // Recorded audio (files in public/audio): the menu music loop, the match background
 // music (a rotation of tracks), crowd chants and one-shot sounds. The synthesized
 // effects live in sound.js.
-import { getVolume, onVolumeChange } from './sound.js';
+import { channelVolume, onVolumeChange } from './sound.js';
 import { AUDIO } from './config.js';
 
 const BASE = import.meta.env.BASE_URL;
@@ -17,6 +17,11 @@ const FILES = {
   goal: `${BASE}audio/grito-gol.mp3`,
   ooh: `${BASE}audio/uuuh.wav`,
 };
+// Which volume channel (sound.js) each file belongs to: music or the stadium crowd.
+const CHANNEL = {
+  menu: 'music', drums: 'music', bg1: 'music', bg2: 'music', bg3: 'music',
+  start: 'crowd', losing2: 'crowd', losing4: 'crowd', goal: 'crowd', ooh: 'crowd',
+};
 const MENU_VOLUME = AUDIO.menuMusic;
 const MATCH_TRACKS = ['drums', 'bg1', 'bg2', 'bg3'];
 const BG_VOLUME = AUDIO.matchMusic;
@@ -24,19 +29,20 @@ const DUCKED_BG = AUDIO.matchMusicDucked; // background volume while a chant is 
 const CHANT_VOLUME = AUDIO.chant;
 const FADE_MS = 600;
 
-// Every sound keeps its own level (audio.level, 0..1) and plays at level × the master
-// volume, so the sound button can turn everything up or down at once.
+// Every sound keeps its own level (audio.level, 0..1) and plays at level × its channel's
+// volume, so the sound panel can turn the music or the crowd up or down at once.
 const live = new Set();
 
 function setLevel(audio, level) {
   audio.level = level;
-  audio.volume = level * getVolume();
+  audio.volume = level * channelVolume(audio.channel);
 }
 
 onVolumeChange(() => live.forEach((audio) => setLevel(audio, audio.level)));
 
 function newAudio(name, level) {
   const audio = new Audio(FILES[name]);
+  audio.channel = CHANNEL[name];
   setLevel(audio, level);
   audio.addEventListener('play', () => live.add(audio));
   audio.addEventListener('ended', () => live.delete(audio));
