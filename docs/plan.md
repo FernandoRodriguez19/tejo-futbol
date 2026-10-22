@@ -52,6 +52,8 @@
   amistosos. Menú con dos botones (Partido normal y Torneo) que abren sus dos opciones.
 - [x] 16. Los controles salen del menú y pasan a un panel con teclas dibujadas (botón del
   joystick arriba a la izquierda, o C / Y), también disponible en la pausa.
+- [x] 17. Pausa nueva: tarjeta con el marcador (y el reloj en torneo) y cuatro botones con
+  íconos: seguir, controles, sonido y salir/abandonar.
 
 ## Ideas para después
 - Controles táctiles para celular.

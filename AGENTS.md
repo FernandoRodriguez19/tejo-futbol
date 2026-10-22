@@ -30,7 +30,9 @@ Juego de fútbol 1 vs 1 en cancha vertical (mezcla de Pong, Haxball y tejo) hech
   dibujados con Canvas 2D al iniciar; no hay archivos de imagen.
 - `src/ui.js` — textos con contorno, la cinta violeta de los carteles, el botón de
   sonido (`soundButton`, también con la tecla M) y el de controles (`controlsButton` +
-  `controlsPanel`, con C o Y del joystick; está en el menú y en la pausa). El volumen general vive en `sound.js`
+  `controlsPanel`, con C o Y del joystick; está en el menú y en la pausa). También
+  `iconButton` (botón ancho con ícono) y los íconos `draw*Icon` que usa la pausa
+  (`GameScene.makePauseMenu`). El volumen general vive en `sound.js`
   (`getVolume`, `cycleVolume`) y `music.js` lo aplica a todo el audio grabado.
 - `src/scenes/MenuScene.js` — menú con dos botones grandes, cada uno abre su página con
   dos tarjetas: Partido normal (vs IA, vs amigo) y Torneo (liga, copa). La dificultad y

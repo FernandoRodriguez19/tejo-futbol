@@ -5,8 +5,11 @@ import {
   KICKOFF_DELAY, COLORS, PALETTE, FONTS, BOT_LEVELS, DASH, HAZARDS,
 } from '../config.js';
 import { makeTextures, kitTexture, SPRITE_SCALE } from '../art.js';
-import { titleText, uiText, ribbon, goTo, wipeIn, soundButton, controlsButton, controlsPanel } from '../ui.js';
-import { sfx, unlockAudio } from '../sound.js';
+import {
+  titleText, uiText, ribbon, goTo, wipeIn, soundButton, controlsPanel, iconButton,
+  drawPlayIcon, drawGamepadIcon, drawSpeakerIcon, drawExitIcon,
+} from '../ui.js';
+import { sfx, unlockAudio, getVolume, cycleVolume, onVolumeChange } from '../sound.js';
 import {
   playChant, stopChant, pauseChant, resumeChant, stopLoop, pauseLoops, resumeLoops, playSound,
   startMatchMusic, changeMatchTrack, stopMatchMusic,
@@ -512,22 +515,104 @@ export default class GameScene extends Phaser.Scene {
       pauseChant();
       pauseLoops();
       this.tweens.pauseAll();
-      this.pauseLayer = this.asUI(() => this.add.container(0, 0, [
-        this.add.rectangle(0, 0, GAME_W, GAME_H, COLORS.ink, 0.6).setOrigin(0),
-        titleText(this, CENTER_X, MID_Y - 60, 'PAUSA', 96),
-        uiText(this, CENTER_X, MID_Y + 50, 'ESC / START: SEGUIR JUGANDO', 24),
-        uiText(this, CENTER_X, MID_Y + 100,
-          this.match ? 'Q / SELECT: ABANDONAR (PERDÉS 0-3)' : 'Q / SELECT: SALIR AL MENÚ', 24, '#ff9aa3'),
-        controlsButton(this, CENTER_X - 130, MID_Y + 180, () => this.openControls()),
-        uiText(this, CENTER_X - 86, MID_Y + 180, 'C / Y: CONTROLES', 22, PALETTE.yellow).setOrigin(0, 0.5),
-      ]).setDepth(20));
+      this.pauseLayer = this.asUI(() => this.makePauseMenu()).setDepth(20);
     } else {
       this.controls?.close();
+      this.stopPauseVolume?.();
       resumeChant();
       resumeLoops();
       this.tweens.resumeAll();
       this.pauseLayer.destroy();
     }
+  }
+
+  // Pause card: the score (and clock), then four big buttons with icons. Nothing here is
+  // animated because tweens are stopped while paused.
+  makePauseMenu() {
+    const cx = CENTER_X;
+    const w = 560;
+    const top = 220;
+    const height = 700;
+    const parts = [this.add.rectangle(0, 0, GAME_W, GAME_H, COLORS.ink, 0.7).setOrigin(0)];
+
+    const card = this.add.graphics();
+    card.fillStyle(COLORS.ink, 1);
+    card.fillRoundedRect(cx - w / 2 - 6, top + 8, w + 12, height, 30);
+    card.fillStyle(COLORS.purpleDark, 1);
+    card.fillRoundedRect(cx - w / 2, top, w, height, 28);
+    card.fillStyle(COLORS.purple, 1);
+    card.fillRoundedRect(cx - w / 2, top, w, 190, { tl: 28, tr: 28, bl: 0, br: 0 });
+    card.fillStyle(0xffffff, 0.14);
+    card.fillRoundedRect(cx - w / 2 + 14, top + 12, w - 28, 44, 18);
+    card.lineStyle(6, COLORS.ink, 1);
+    card.strokeRoundedRect(cx - w / 2, top, w, height, 28);
+    card.lineBetween(cx - w / 2, top + 190, cx + w / 2, top + 190);
+    parts.push(card, titleText(this, cx, top - 6, 'PAUSA', 84).setAngle(-4));
+
+    // Scoreboard: both kits, the names and the score (plus the clock in a league match).
+    const hasClock = this.timeLeft !== null;
+    const scoreY = top + 108;
+    parts.push(
+      this.add.image(cx - 205, scoreY, kitTexture(this, this.p1Kit, '10')).setScale(0.6),
+      this.add.image(cx + 205, scoreY, kitTexture(this, this.p2Kit, '9')).setScale(0.6),
+      titleText(this, cx, scoreY - 4, `${this.score.p1}  -  ${this.score.p2}`, 52, PALETTE.yellow),
+      uiText(this, cx - 205, scoreY + 52, this.p1Name.toUpperCase(), 15),
+      uiText(this, cx + 205, scoreY + 52, this.p2Name.toUpperCase(), 15),
+    );
+    if (hasClock) {
+      const secs = Math.ceil(Math.max(0, this.timeLeft) / 1000);
+      parts.push(uiText(this, cx, scoreY + 50, `⏱ ${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`, 20));
+    }
+
+    const quitLabel = this.match ? 'ABANDONAR' : 'SALIR AL MENÚ';
+    const quitSub = this.match ? 'Perdés el partido 0-3' : 'Se termina este partido';
+    const items = [
+      { title: 'SEGUIR JUGANDO', sub: 'Esc / Start', color: 0x2fb36c, drawIcon: drawPlayIcon, action: () => this.togglePause() },
+      { title: 'CONTROLES', sub: 'C / Y', drawIcon: drawGamepadIcon, action: () => this.openControls() },
+      { title: this.volumeLabel(), sub: 'M: alto, medio o mudo', drawIcon: (g) => drawSpeakerIcon(g, getVolume()), action: () => this.cyclePauseVolume() },
+      { title: quitLabel, sub: quitSub, color: COLORS.p2, drawIcon: drawExitIcon, action: () => this.quitFromPause() },
+    ];
+    this.pauseButtons = items.map((item, i) => {
+      const btn = iconButton(this, cx, top + 262 + i * 104, w - 80, 84, item, () => this.pauseAction(i));
+      btn.zone.on('pointerover', () => this.pauseFocus(i));
+      btn.action = item.action;
+      parts.push(btn.container, btn.zone);
+      return btn;
+    });
+    parts.push(uiText(this, cx, top + height - 30, '↑ ↓ elegir  ·  Enter / A: aceptar', 15, '#bfb3ff'));
+
+    // The sound button (or M) can change the volume while paused: keep the row in sync.
+    const sound = this.pauseButtons[2];
+    this.stopPauseVolume = onVolumeChange((level) => {
+      sound.icon.clear();
+      drawSpeakerIcon(sound.icon, level);
+      sound.setLabel(this.volumeLabel());
+    });
+
+    this.pauseIndex = 0;
+    this.pauseFocus(0, true);
+    return this.add.container(0, 0, parts);
+  }
+
+  volumeLabel() {
+    return { 1: 'SONIDO: ALTO', 0.5: 'SONIDO: MEDIO', 0: 'SONIDO: MUDO' }[getVolume()];
+  }
+
+  cyclePauseVolume() {
+    unlockAudio();
+    cycleVolume();
+    sfx.select();
+  }
+
+  pauseFocus(i, silent = false) {
+    if (!silent && i !== this.pauseIndex) sfx.select();
+    this.pauseIndex = i;
+    this.pauseButtons.forEach((btn, j) => btn.setActive(j === i));
+  }
+
+  pauseAction(i) {
+    this.pauseFocus(i, true);
+    this.pauseButtons[i].action();
   }
 
   // Controls panel over the pause screen (C / Y or its button).
@@ -703,9 +788,18 @@ export default class GameScene extends Phaser.Scene {
         if (pressed(k.esc) || pressed(k.enter) || pressed(k.space) || pressed(k.c) || padPressed(BTN.A, BTN.B, BTN.Y, BTN.START)) this.controls.close();
         return;
       }
+      // Pause menu: up/down (keys, cross or stick) pick a button, Enter / A presses it.
+      const stickY = pads.map((p) => p.move.y).find((y) => Math.abs(y) > 0.5) ?? 0;
+      const stickDir = Math.sign(stickY);
+      const stickMoved = stickDir !== 0 && stickDir !== this.pauseStick;
+      this.pauseStick = stickDir;
+      const n = this.pauseButtons.length;
       if (pressed(k.c) || padPressed(BTN.Y)) this.openControls();
-      else if (pressed(k.esc) || pressed(k.enter) || padPressed(BTN.START, BTN.A)) this.togglePause();
+      else if (pressed(k.esc) || padPressed(BTN.START, BTN.B)) this.togglePause();
+      else if (pressed(k.enter) || pressed(k.space) || padPressed(BTN.A)) this.pauseAction(this.pauseIndex);
       else if (pressed(k.q) || padPressed(BTN.SELECT)) this.quitFromPause();
+      else if (pressed(k.up) || pressed(k.w) || padPressed(BTN.UP) || (stickMoved && stickDir < 0)) this.pauseFocus((this.pauseIndex + n - 1) % n);
+      else if (pressed(k.down) || pressed(k.s) || padPressed(BTN.DOWN) || (stickMoved && stickDir > 0)) this.pauseFocus((this.pauseIndex + 1) % n);
       return;
     }
     if (pressed(k.esc) || padPressed(BTN.START)) {

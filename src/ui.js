@@ -170,6 +170,132 @@ export function button(scene, x, y, w, h, label, onClick, fontSize = 26) {
   return { container, zone, setActive };
 }
 
+// ---------- small icons (drawn around the Graphics' 0,0, about 40 px wide) ----------
+
+// Speaker with 2 waves (full), 1 wave (half) or a red cross (muted).
+export function drawSpeakerIcon(g, level) {
+  const speaker = [
+    { x: -16, y: -6 }, { x: -8, y: -6 }, { x: 2, y: -15 },
+    { x: 2, y: 15 }, { x: -8, y: 6 }, { x: -16, y: 6 },
+  ];
+  g.fillStyle(0xffffff, 1);
+  g.fillPoints(speaker, true);
+  g.lineStyle(3, COLORS.ink, 1);
+  g.strokePoints(speaker, true);
+
+  if (level === 0) {
+    for (const [w, color] of [[8, COLORS.ink], [4, COLORS.p2]]) {
+      g.lineStyle(w, color, 1);
+      g.lineBetween(7, -7, 19, 7);
+      g.lineBetween(7, 7, 19, -7);
+    }
+    return;
+  }
+  const waves = level >= 1 ? 2 : 1;
+  for (let i = 0; i < waves; i++) {
+    for (const [w, color] of [[7, COLORS.ink], [3, 0xffffff]]) {
+      g.lineStyle(w, color, 1);
+      g.beginPath();
+      g.arc(2, 0, 9 + i * 8, -0.85, 0.85);
+      g.strokePath();
+    }
+  }
+}
+
+// Gamepad: body with two grips, a cross on the left and two buttons on the right.
+export function drawGamepadIcon(g) {
+  g.fillStyle(0xffffff, 1);
+  g.lineStyle(3, COLORS.ink, 1);
+  g.fillRoundedRect(-18, -9, 36, 18, 8);
+  g.strokeRoundedRect(-18, -9, 36, 18, 8);
+  for (const side of [-1, 1]) {
+    g.fillCircle(side * 12, 7, 7);
+    g.strokeCircle(side * 12, 7, 7);
+  }
+  g.fillRect(-14, -8, 28, 14); // hides the grip outlines inside the body
+  g.fillStyle(COLORS.ink, 1);
+  g.fillRect(-13, -2, 10, 3);
+  g.fillRect(-9.5, -5.5, 3, 10);
+  g.fillStyle(COLORS.p2, 1);
+  g.fillCircle(8, -2, 2.6);
+  g.fillStyle(COLORS.p1, 1);
+  g.fillCircle(13, 2, 2.6);
+}
+
+// "Play" triangle.
+export function drawPlayIcon(g) {
+  const tri = [{ x: -9, y: -14 }, { x: 15, y: 0 }, { x: -9, y: 14 }];
+  g.fillStyle(0xffffff, 1);
+  g.fillPoints(tri, true);
+  g.lineStyle(3, COLORS.ink, 1);
+  g.strokePoints(tri, true);
+}
+
+// Door with an arrow walking out of it.
+export function drawExitIcon(g) {
+  g.fillStyle(0xffffff, 1);
+  g.lineStyle(3, COLORS.ink, 1);
+  g.fillRoundedRect(-17, -16, 20, 32, 3);
+  g.strokeRoundedRect(-17, -16, 20, 32, 3);
+  g.fillStyle(COLORS.ink, 1);
+  g.fillCircle(-2, 1, 2.2);
+  const arrow = [
+    { x: 0, y: -4 }, { x: 9, y: -4 }, { x: 9, y: -10 }, { x: 19, y: 0 },
+    { x: 9, y: 10 }, { x: 9, y: 4 }, { x: 0, y: 4 },
+  ];
+  g.fillStyle(COLORS.yellow, 1);
+  g.fillPoints(arrow, true);
+  g.lineStyle(3, COLORS.ink, 1);
+  g.strokePoints(arrow, true);
+}
+
+// Wide button with a round icon on the left, a title and an optional small line under
+// it. Yellow when active; `color` otherwise. Returns { container, zone, setActive,
+// setLabel(title, sub), icon } (icon: the Graphics to draw the icon on).
+export function iconButton(scene, x, y, w, h, { title, sub = '', color = COLORS.purple, drawIcon }, onClick) {
+  const bg = scene.add.graphics();
+  const iconX = -w / 2 + h / 2 + 4;
+  const badge = scene.add.graphics();
+  badge.fillStyle(COLORS.ink, 1);
+  badge.fillCircle(iconX + 2, 4, h / 2 - 8);
+  badge.fillStyle(COLORS.purpleDark, 1);
+  badge.fillCircle(iconX, 0, h / 2 - 8);
+  badge.lineStyle(4, COLORS.ink, 1);
+  badge.strokeCircle(iconX, 0, h / 2 - 8);
+  const icon = scene.add.graphics({ x: iconX, y: 0 });
+  drawIcon?.(icon);
+  const textX = iconX + h / 2 + 4;
+  const label = scene.add.text(textX, sub ? -11 : 0, title, { fontFamily: FONTS.title, fontSize: '26px' }).setOrigin(0, 0.5);
+  const subText = scene.add.text(textX, 20, sub, {
+    fontFamily: FONTS.ui, fontStyle: '900', fontSize: '15px', color: PALETTE.white, stroke: PALETTE.ink, strokeThickness: 4,
+  }).setOrigin(0, 0.5);
+  const container = scene.add.container(x, y, [bg, badge, icon, label, subText]);
+  const zone = scene.add.zone(x, y, w, h).setInteractive({ useHandCursor: true });
+  zone.on('pointerdown', onClick);
+
+  const setActive = (on) => {
+    bg.clear();
+    bg.fillStyle(COLORS.ink, 1);
+    bg.fillRoundedRect(-w / 2, -h / 2 + 6, w, h, 20);
+    bg.fillStyle(on ? COLORS.yellow : color, 1);
+    bg.fillRoundedRect(-w / 2, -h / 2, w, h, 20);
+    bg.fillStyle(0xffffff, 0.22);
+    bg.fillRoundedRect(-w / 2 + 10, -h / 2 + 6, w - 20, h * 0.3, 12);
+    bg.lineStyle(5, COLORS.ink, 1);
+    bg.strokeRoundedRect(-w / 2, -h / 2, w, h, 20);
+    label.setColor(on ? PALETTE.ink : PALETTE.white).setStroke(PALETTE.ink, on ? 0 : 6);
+    subText.setColor(on ? PALETTE.ink : PALETTE.white).setStroke(PALETTE.ink, on ? 0 : 4);
+    container.setScale(on ? 1.04 : 1);
+  };
+  const setLabel = (t, s = sub) => {
+    label.setText(t);
+    subText.setText(s);
+    label.setY(s ? -11 : 0);
+  };
+  setActive(false);
+  return { container, zone, icon, setActive, setLabel };
+}
+
 // Round speaker button: each click (or the M key) cycles full → half → muted. The icon
 // shows the sound waves left, or a red cross when muted.
 export function soundButton(scene, x, y, scale = 1) {
@@ -188,34 +314,7 @@ export function soundButton(scene, x, y, scale = 1) {
     g.fillEllipse(0, -r * 0.45, r * 1.3, r * 0.6);
     g.lineStyle(4, COLORS.ink, 1);
     g.strokeCircle(0, 0, r);
-
-    // Speaker: box + cone.
-    const speaker = [
-      { x: -16, y: -6 }, { x: -8, y: -6 }, { x: 2, y: -15 },
-      { x: 2, y: 15 }, { x: -8, y: 6 }, { x: -16, y: 6 },
-    ];
-    g.fillStyle(0xffffff, 1);
-    g.fillPoints(speaker, true);
-    g.lineStyle(3, COLORS.ink, 1);
-    g.strokePoints(speaker, true);
-
-    if (level === 0) {
-      for (const [w, color] of [[8, COLORS.ink], [4, COLORS.p2]]) {
-        g.lineStyle(w, color, 1);
-        g.lineBetween(7, -7, 19, 7);
-        g.lineBetween(7, 7, 19, -7);
-      }
-      return;
-    }
-    const waves = level >= 1 ? 2 : 1;
-    for (let i = 0; i < waves; i++) {
-      for (const [w, color] of [[7, COLORS.ink], [3, 0xffffff]]) {
-        g.lineStyle(w, color, 1);
-        g.beginPath();
-        g.arc(2, 0, 9 + i * 8, -0.85, 0.85);
-        g.strokePath();
-      }
-    }
+    drawSpeakerIcon(g, level);
   };
 
   const toggle = () => {
@@ -255,24 +354,7 @@ export function controlsButton(scene, x, y, onClick, scale = 1) {
   g.fillEllipse(0, -r * 0.45, r * 1.3, r * 0.6);
   g.lineStyle(4, COLORS.ink, 1);
   g.strokeCircle(0, 0, r);
-
-  // Gamepad: body with two grips, a cross on the left and two buttons on the right.
-  g.fillStyle(0xffffff, 1);
-  g.lineStyle(3, COLORS.ink, 1);
-  g.fillRoundedRect(-18, -9, 36, 18, 8);
-  g.strokeRoundedRect(-18, -9, 36, 18, 8);
-  for (const side of [-1, 1]) {
-    g.fillCircle(side * 12, 7, 7);
-    g.strokeCircle(side * 12, 7, 7);
-  }
-  g.fillRect(-14, -8, 28, 14); // hides the grip outlines inside the body
-  g.fillStyle(COLORS.ink, 1);
-  g.fillRect(-13, -2, 10, 3);
-  g.fillRect(-9.5, -5.5, 3, 10);
-  g.fillStyle(COLORS.p2, 1);
-  g.fillCircle(8, -2, 2.6);
-  g.fillStyle(COLORS.p1, 1);
-  g.fillCircle(13, 2, 2.6);
+  drawGamepadIcon(g);
 
   const container = scene.add.container(x, y, [g]).setScale(scale);
   const zone = scene.add.zone(0, 0, r * 2 + 10, r * 2 + 10).setInteractive({ useHandCursor: true });
