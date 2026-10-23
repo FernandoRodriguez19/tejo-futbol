@@ -2,7 +2,7 @@ import * as Phaser from 'phaser';
 import {
   GAME_W, GAME_H, FIELD, CORNER_R, MID_Y, CENTER_X, MOUTH_L, MOUTH_R, POST_R,
   PLAYER_R, PLAYER_SPEED, KICKOFF_OFFSET, BALL_R, BALL, KICK, WIN_GOALS, GOAL_PAUSE,
-  KICKOFF_DELAY, COLORS, PALETTE, FONTS, BOT_LEVELS, DASH, HAZARDS,
+  KICKOFF_DELAY, COLORS, PALETTE, FONTS, BOT_LEVELS, DASH, HAZARDS, SCORE_BOX,
 } from '../config.js';
 import { makeTextures, kitTexture, SPRITE_SCALE } from '../art.js';
 import {
@@ -59,6 +59,9 @@ export default class GameScene extends Phaser.Scene {
     this.teams = data.teams ?? null;
     // Ice & soap hazards: a tournament setting, or chosen before each friendly.
     this.hazardsOn = this.match ? !!this.match.hazards : !!data.hazards;
+    // Which end player 1 defends (1 vs 1 lets them pick it before the match); player 2 gets
+    // the other one. Against the AI and in tournaments the player is always at the bottom.
+    this.p1Side = this.mode === 'pvp' && data.p1Side === 'top' ? 'top' : 'bottom';
     this.goldenGoal = false;
   }
 
@@ -106,14 +109,15 @@ export default class GameScene extends Phaser.Scene {
     this.fire = new Particles(this, 2.5);
     this.rings = this.add.graphics().setDepth(3);
 
-    // p1 defends the bottom goal, p2 the top one. Kits have no number: the eyes go there.
+    // p1 defends this.p1Side (the bottom goal unless they picked the top one), p2 the
+    // other. Kits have no number: the eyes go there.
     const { p1Kit, p2Kit, p1Name, p2Name } = this.sides();
     this.p1Kit = p1Kit;
     this.p2Kit = p2Kit;
     this.p1Name = p1Name;
     this.p2Name = p2Name;
-    this.p1 = this.makePlayer(kitTexture(this, p1Kit, ''), 'bottom', p1Kit);
-    this.p2 = this.makePlayer(kitTexture(this, p2Kit, ''), 'top', p2Kit);
+    this.p1 = this.makePlayer(kitTexture(this, p1Kit, ''), this.p1Side, p1Kit);
+    this.p2 = this.makePlayer(kitTexture(this, p2Kit, ''), this.p1Side === 'top' ? 'bottom' : 'top', p2Kit);
     this.eyesGfx = this.add.graphics().setDepth(4.5);
 
     // The ball image sits in a container: the container stretches along the velocity,
@@ -233,29 +237,49 @@ export default class GameScene extends Phaser.Scene {
     return side === 'bottom' ? FIELD.bottom - KICKOFF_OFFSET : FIELD.top + KICKOFF_OFFSET;
   }
 
+  // Score box in the top-left corner (clear of the top goal, which is in the middle): one
+  // row per player in the same order as the pitch (whoever plays at the top goes first),
+  // each with their round kit, a ring around it that fills up with the dash, and their
+  // goals. In tournaments the clock sits on the right of the box. The speed tag is in the
+  // top-right corner.
   makeHud() {
-    const cy = 50;
-    const w = 520;
-    const h = 66;
+    const { x, y, w, rowH, clockW, kitScale } = SCORE_BOX;
     const m = this.match;
-    const hex = (c) => parseInt(c.slice(1), 16);
+    const boxW = w + (m ? clockW : 0);
+    const boxH = rowH * 2 + 12;
     const g = this.add.graphics().setDepth(8);
     g.fillStyle(COLORS.ink, 1);
-    g.fillRoundedRect(CENTER_X - w / 2 - 6, cy - h / 2 - 6, w + 12, h + 12, 22);
-    g.fillStyle(hex(mainColor(this.p1Kit)), 1);
-    g.fillRoundedRect(CENTER_X - w / 2, cy - h / 2, w / 2 - 2, h, { tl: 16, bl: 16, tr: 4, br: 4 });
-    g.fillStyle(hex(mainColor(this.p2Kit)), 1);
-    g.fillRoundedRect(CENTER_X + 2, cy - h / 2, w / 2 - 2, h, { tl: 4, bl: 4, tr: 16, br: 16 });
-    g.fillStyle(0xffffff, 0.2);
-    g.fillRect(CENTER_X - w / 2 + 10, cy - h / 2 + 4, w - 20, 12);
+    g.fillRoundedRect(x - 5, y - 5, boxW + 10, boxH + 10, 20);
+    g.fillStyle(COLORS.purpleDark, 1);
+    g.fillRoundedRect(x, y, boxW, boxH, 16);
+    g.fillStyle(0xffffff, 0.12);
+    g.fillRoundedRect(x + 6, y + 5, boxW - 12, 14, 7);
+    g.lineStyle(2, 0xffffff, 0.15);
+    g.lineBetween(x + 10, y + boxH / 2, x + w - 10, y + boxH / 2);
 
-    const nameStyle = { fontFamily: FONTS.ui, fontStyle: '900', fontSize: '17px', color: PALETTE.white, stroke: PALETTE.ink, strokeThickness: 4 };
-    this.add.text(CENTER_X - w / 2 + 18, cy, this.p1Name.toUpperCase(), nameStyle).setOrigin(0, 0.5).setDepth(9);
-    this.add.text(CENTER_X + w / 2 - 18, cy, this.p2Name.toUpperCase(), nameStyle).setOrigin(1, 0.5).setDepth(9);
-    this.p1ScoreText = titleText(this, CENTER_X - 34, cy, '0', 40).setDepth(9);
-    this.p2ScoreText = titleText(this, CENTER_X + 34, cy, '0', 40).setDepth(9);
+    // Rows by side: top first. Each player keeps their row for the whole match.
+    const kitX = x + 38;
+    this.hudRows = {};
+    for (const [i, side] of ['top', 'bottom'].entries()) {
+      const p = this.playerOn(side);
+      const rowY = y + 6 + rowH * i + rowH / 2;
+      const kit = p === this.p1 ? this.p1Kit : this.p2Kit;
+      this.add.image(kitX, rowY, kitTexture(this, kit, '')).setScale(kitScale).setDepth(9);
+      const score = titleText(this, x + w - 34, rowY, '0', 38).setDepth(9);
+      this.hudRows[p === this.p1 ? 'p1' : 'p2'] = { x: kitX, y: rowY, score };
+    }
+    // The dash rings, redrawn every frame.
+    this.dashBars = this.add.graphics().setDepth(9.5);
 
-    // Speed tag on the right, "Esc" hint on the left.
+    if (m) {
+      g.lineStyle(2, 0xffffff, 0.15);
+      g.lineBetween(x + w, y + 10, x + w, y + boxH - 10);
+      this.clockText = this.add.text(x + w + clockW / 2, y + boxH / 2, '', { fontFamily: FONTS.title, fontSize: '24px', color: PALETTE.white })
+        .setOrigin(0.5).setDepth(9);
+      this.updateClock();
+    }
+
+    const cy = 50;
     const tagX = GAME_W - 74;
     g.fillStyle(COLORS.ink, 1);
     g.fillRoundedRect(tagX - 58, cy - 26, 116, 52, 16);
@@ -265,38 +289,32 @@ export default class GameScene extends Phaser.Scene {
       .setOrigin(0.5).setDepth(9);
     this.speedText = this.add.text(tagX, cy + 8, 'x1.0', { fontFamily: FONTS.title, fontSize: '20px', color: PALETTE.ink })
       .setOrigin(0.5).setDepth(9);
-    if (m) {
-      // Match clock instead of the Esc hint.
-      g.fillStyle(COLORS.ink, 1);
-      g.fillRoundedRect(16, cy - 26, 116, 52, 16);
-      this.clockText = this.add.text(74, cy, '', { fontFamily: FONTS.title, fontSize: '28px', color: PALETTE.white })
-        .setOrigin(0.5).setDepth(9);
-      this.updateClock();
-    } else {
-      uiText(this, 74, cy, 'ESC / START\nPAUSA', 14).setDepth(9).setLineSpacing(-4);
-    }
-
-    // Dash bars under each half of the scoreboard, redrawn every frame.
-    this.dashBars = this.add.graphics().setDepth(9);
-    uiText(this, CENTER_X, cy + h / 2 + 17, 'DASH', 12, PALETTE.yellow).setDepth(10);
-    this.dashBarGeom = { y: cy + h / 2 + 10, w: w / 2 - 44, left: CENTER_X - w / 2 + 12, right: CENTER_X + 32 };
 
     this.updateHud();
   }
 
+  playerOn(side) {
+    return this.p1.side === side ? this.p1 : this.p2;
+  }
+
+  // Dash ring around each kit in the score box: fills clockwise from the top, and pulses
+  // yellow when the dash is ready.
   drawDashBars(now) {
     const g = this.dashBars;
-    const { y, w, left, right } = this.dashBarGeom;
+    const r = SCORE_BOX.ringR;
     g.clear();
-    for (const [p, x] of [[this.p1, left], [this.p2, right]]) {
+    for (const key of ['p1', 'p2']) {
+      const p = this[key];
+      const { x, y } = this.hudRows[key];
+      g.lineStyle(7, COLORS.ink, 1);
+      g.strokeCircle(x, y, r);
+      if (p.dash <= 0) continue;
       const full = p.dash >= 1;
-      g.fillStyle(COLORS.ink, 1);
-      g.fillRoundedRect(x - 4, y - 4, w + 8, 22, 11);
-      if (p.dash > 0) {
-        const pulse = full ? 0.75 + 0.25 * Math.sin(now / 110) : 0.85;
-        g.fillStyle(full ? COLORS.yellow : 0xffffff, pulse);
-        g.fillRoundedRect(x, y, Math.max(14, w * p.dash), 14, 7);
-      }
+      const pulse = full ? 0.7 + 0.3 * Math.sin(now / 110) : 0.9;
+      g.lineStyle(4, full ? COLORS.yellow : 0xffffff, pulse);
+      g.beginPath();
+      g.arc(x, y, r, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.min(1, p.dash), false);
+      g.strokePath();
     }
   }
 
@@ -307,13 +325,12 @@ export default class GameScene extends Phaser.Scene {
   }
 
   updateHud() {
-    this.p1ScoreText.setText(String(this.score.p1));
-    this.p2ScoreText.setText(String(this.score.p2));
+    this.hudRows.p1.score.setText(String(this.score.p1));
+    this.hudRows.p2.score.setText(String(this.score.p2));
   }
 
-  // The number that just changed jumps and flashes yellow.
   popScore(key) {
-    const t = key === 'p1' ? this.p1ScoreText : this.p2ScoreText;
+    const t = this.hudRows[key].score;
     this.tweens.killTweensOf(t);
     t.setScale(2).setColor(PALETTE.yellow);
     this.tweens.add({ targets: t, scale: 1, duration: 500, ease: 'Back.Out' });
@@ -382,14 +399,16 @@ export default class GameScene extends Phaser.Scene {
     this.popScore(key);
 
     const now = this.time.now;
-    const goalY = scorer === this.p1 ? FIELD.top : FIELD.bottom;
-    this.net = { top: scorer === this.p1, x: Phaser.Math.Clamp(this.ball.x, MOUTH_L + 15, MOUTH_R - 15), t0: now };
+    // The scorer attacks the goal opposite their side (sides can swap in 1 vs 1).
+    const intoTop = scorer.side === 'bottom';
+    const goalY = intoTop ? FIELD.top : FIELD.bottom;
+    this.net = { top: intoTop, x: Phaser.Math.Clamp(this.ball.x, MOUTH_L + 15, MOUTH_R - 15), t0: now };
     this.celebration = { t0: now };
     this.camPunch = { x: this.ball.x, y: goalY, until: now + GOAL_PAUSE };
     scorer.mood = 'happy';
     conceder.mood = 'dizzy';
     scorer.moodUntil = conceder.moodUntil = Infinity;
-    this.confetti(this.ball.x, goalY, scorer === this.p1 ? 1 : -1);
+    this.confetti(this.ball.x, goalY, intoTop ? 1 : -1);
     this.grass.emit(this.ball.x, goalY, {
       count: 18, speed: [120, 320], spread: 360, life: [400, 800], size: [3, 6],
       colors: [0x6fbf2a, 0x9be33b, 0x4f9a1f], shape: 'rect', drag: 3,
@@ -763,7 +782,7 @@ export default class GameScene extends Phaser.Scene {
       } else if (pressed(k.esc) || padPressed(BTN.B, BTN.START)) {
         goTo(this, 'Menu');
       } else if (pressed(k.r) || padPressed(BTN.A)) {
-        goTo(this, 'Game', { mode: this.mode, level: this.level, teams: this.teams, hazards: this.hazardsOn });
+        goTo(this, 'Game', { mode: this.mode, level: this.level, teams: this.teams, hazards: this.hazardsOn, p1Side: this.p1Side });
       }
       return;
     }
@@ -884,7 +903,8 @@ export default class GameScene extends Phaser.Scene {
     const now = this.time.now;
     if (now < (this.cooldowns.drama ?? 0)) return;
     const b = this.ball;
-    for (const [side, attacker] of [['top', 'p1'], ['bottom', 'p2']]) {
+    for (const side of ['top', 'bottom']) {
+      const attacker = this.playerOn(side === 'top' ? 'bottom' : 'top') === this.p1 ? 'p1' : 'p2';
       if (!headingIntoGoal(b, b.vx, b.vy, side, 0.2)) continue;
       const decisive = this.match ? this.timeLeft < 6000 : this.score[attacker] === WIN_GOALS - 1;
       if (decisive) {
@@ -1053,8 +1073,8 @@ export default class GameScene extends Phaser.Scene {
       for (const post of POSTS) this.collidePost(post);
       for (const p of [this.p1, this.p2]) this.collidePlayer(p);
 
-      if (b.y < FIELD.top - BALL_R) return this.goal(this.p1);
-      if (b.y > FIELD.bottom + BALL_R) return this.goal(this.p2);
+      if (b.y < FIELD.top - BALL_R) return this.goal(this.playerOn('bottom'));
+      if (b.y > FIELD.bottom + BALL_R) return this.goal(this.playerOn('top'));
     }
   }
 

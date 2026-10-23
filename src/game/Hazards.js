@@ -71,9 +71,9 @@ export default class Hazards {
       const s = this.scene;
       const type = Math.random() < 0.5 ? 'ice' : 'soap';
       // A bullseye on the grass under the item says "hit this", not "walk over this".
-      const target = s.add.image(x, y, 'target').setDepth(3.4).setScale(0).setAlpha(0.85);
-      s.tweens.add({ targets: target, scale: SPRITE_SCALE * 1.5, duration: 280, ease: 'Back.Out' });
-      s.tweens.add({ targets: target, scale: SPRITE_SCALE * 1.3, delay: 280, duration: 500, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
+      const target = s.add.image(x, y, 'target').setDepth(3.4).setScale(0).setAlpha(0.7);
+      s.tweens.add({ targets: target, scale: SPRITE_SCALE * 1.15, duration: 280, ease: 'Back.Out' });
+      s.tweens.add({ targets: target, scale: SPRITE_SCALE * 1.03, delay: 280, duration: 500, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
       const sprite = s.add.image(x, y, type).setDepth(3.5).setScale(0);
       s.tweens.add({ targets: sprite, scale: SPRITE_SCALE * 1.1, duration: 280, ease: 'Back.Out' });
       s.tweens.add({ targets: sprite, angle: { from: -6, to: 6 }, duration: 700, yoyo: true, repeat: -1, ease: 'Sine.InOut' });

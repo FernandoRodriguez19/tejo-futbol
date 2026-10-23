@@ -39,7 +39,7 @@ export const KICK = {
 // Dash: a short burst of speed (Shift / R1). The bar fills in `charge` ms of play; the
 // dash covers about duration × speed = 130 px, a short burst.
 export const DASH = {
-  charge: 30000,
+  charge: 5000, // ms to fill the bar
   duration: 120, // ms
   speed: 1100, // px/s
   kickBoost: 1.35, // kicking during a dash: dash + kick = power shot
@@ -73,6 +73,10 @@ export const AUDIO = {
   goalShout: 0.8,
   ooh: 0.6,
 };
+
+// Score box in the top-left corner of the match: position, width without the clock, row
+// height, width of the clock column (tournaments), kit size and dash ring radius.
+export const SCORE_BOX = { x: 16, y: 12, w: 132, rowH: 56, clockW: 72, kitScale: 0.3, ringR: 24 };
 
 export const WIN_GOALS = 5;
 export const GOAL_PAUSE = 1600; // ms celebrating before the kickoff

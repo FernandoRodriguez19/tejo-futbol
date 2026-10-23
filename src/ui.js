@@ -483,13 +483,13 @@ export function controlsPanel(scene, onClose) {
   const col = [cx - 200, cx + 10, cx + 200];
 
   let y = top + 140;
-  parts.push(...header(y, 'JUGADOR 1  ·  AZUL  ·  ABAJO', COLORS.p1));
+  parts.push(...header(y, 'JUGADOR 1', COLORS.p1));
   parts.push(...keyCluster(scene, col[0], y + 86, ['W', 'A', 'S', 'D']), caption(col[0], y + 152, 'MOVERSE'));
   parts.push(...keycap(scene, col[1], y + 113, 'ESPACIO', 150), caption(col[1], y + 152, 'PATEAR'));
   parts.push(...keycap(scene, col[2], y + 113, 'SHIFT IZQ', 120), caption(col[2], y + 152, 'DASH'));
 
   y += 210;
-  parts.push(...header(y, 'JUGADOR 2  ·  ROJO  ·  ARRIBA', COLORS.p2));
+  parts.push(...header(y, 'JUGADOR 2', COLORS.p2));
   parts.push(...keyCluster(scene, col[0], y + 86, ['↑', '←', '↓', '→']), caption(col[0], y + 152, 'MOVERSE'));
   parts.push(...keycap(scene, col[1], y + 113, 'ENTER', 120), caption(col[1], y + 152, 'PATEAR'));
   parts.push(...keycap(scene, col[2], y + 113, 'SHIFT DER', 120), caption(col[2], y + 152, 'DASH'));

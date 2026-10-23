@@ -62,6 +62,10 @@
   veces (por ejemplo con Steam abierto) ya no aprieta ni mueve dos veces.
 - [x] 21. Un solo botón OPCIONES (engranaje) en todas las pantallas, con Controles y
   Sonido adentro. En la pausa también quedan juntos en "Opciones".
+- [x] 22. Diana de los power-ups más chica.
+- [x] 23. Marcador en un recuadro en la esquina de arriba a la izquierda (ya no tapa el
+  arco), con la bolita de cada jugador y un aro que se llena con el dash. Dash se carga
+  en 5 s. En el 1 vs 1 se elige antes de jugar de qué lado va el jugador 1.
 
 ## Ideas para después
 - Controles táctiles para celular.

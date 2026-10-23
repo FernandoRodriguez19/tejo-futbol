@@ -135,7 +135,7 @@ export default class TeamSelectScene extends Phaser.Scene {
     const vsBot = this.friendly.mode === 'bot';
     if (this.picks.length === 0) {
       this.titleTxt.setText('JUGADOR 1: ELEGÍ');
-      this.subTxt.setText(vsBot ? 'Primero tu equipo, después el del bot' : 'Primero el jugador 1 (abajo), después el jugador 2 (arriba)');
+      this.subTxt.setText(vsBot ? 'Primero tu equipo, después el del bot' : 'Primero el jugador 1, después el jugador 2');
     } else {
       this.titleTxt.setText(vsBot ? 'ELEGÍ EL RIVAL' : 'JUGADOR 2: ELEGÍ');
       this.subTxt.setText(`Jugador 1 juega con ${TEAMS[this.picks[0]].short}  ·  Esc: cambiar`);
@@ -247,7 +247,14 @@ export default class TeamSelectScene extends Phaser.Scene {
     const t2 = TEAMS[this.picks[1]];
     const kits = pickKits(t1, t2);
     const vsBot = this.friendly.mode === 'bot';
+    // 1 vs 1: they pick which end player 1 defends (player 2 gets the other); it stays
+    // the same for the whole match and is remembered for the next one.
+    const sides = [{ id: 'bottom', label: 'ABAJO' }, { id: 'top', label: 'ARRIBA' }];
+    const sideRow = vsBot ? [] : [{
+      key: 'p1Side', label: 'JUGADOR 1', values: sides, index: this.registry.get('p1Side') === 'top' ? 1 : 0,
+    }];
     this.openSetup({
+      extraRows: sideRow,
       icons: [
         { texture: kitTexture(this, kits.home, '10'), scale: 0.55 },
         { texture: kitTexture(this, kits.away, '9'), scale: 0.55 },
@@ -255,12 +262,16 @@ export default class TeamSelectScene extends Phaser.Scene {
       subtitle: `${t1.short} vs ${t2.short}${vsBot ? ' (bot)' : ''}  ·  gana el primero a 5 goles`,
       difficulty: vsBot ? this.friendly.level : null,
       rememberBotLevel: true,
-      onStart: ({ difficulty, hazards }) => goTo(this, 'Game', {
-        mode: this.friendly.mode,
-        level: difficulty ?? this.friendly.level,
-        teams: { p1: t1.id, p2: t2.id },
-        hazards,
-      }),
+      onStart: ({ difficulty, hazards, p1Side }) => {
+        if (p1Side) this.registry.set('p1Side', p1Side);
+        goTo(this, 'Game', {
+          mode: this.friendly.mode,
+          level: difficulty ?? this.friendly.level,
+          teams: { p1: t1.id, p2: t2.id },
+          hazards,
+          p1Side,
+        });
+      },
       // Back to choosing player 2's team.
       onCancel: () => this.picks.pop(),
     });

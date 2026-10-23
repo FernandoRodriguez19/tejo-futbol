@@ -48,7 +48,11 @@ Juego de fútbol 1 vs 1 en cancha vertical (mezcla de Pong, Haxball y tejo) hech
   los power-ups se eligen en la pantalla "antes de jugar" (`src/setupPanel.js`, clase
   `SetupPanel`, usada por `TeamSelectScene` y `NationSelectScene`).
 - `src/scenes/GameScene.js` — partido: movimiento, física de la pelota, goles, fin.
-  En modo liga además: reloj de 90 s, pausa y guardado del resultado.
+  En modo liga además: reloj de 90 s, pausa y guardado del resultado. Cada jugador tiene
+  `side` ('top' / 'bottom'); en 1 vs 1 el jugador 1 puede jugar arriba (`data.p1Side`),
+  así que para saber quién está en un lado usar `playerOn(side)`, no dar por hecho que
+  p1 está abajo. El marcador es un recuadro en la esquina (`makeHud`, medidas en
+  `SCORE_BOX`) con el dash como aro alrededor de cada bolita (`drawDashBars`).
 - `src/scenes/TeamSelectScene.js` — selector de club estilo FIFA (mismo look que el de
   la copa) para una liga nueva o un amistoso. La tarjeta (`sportsCard`) y el círculo de
   nivel (`levelBadge`, `levelOf`, `starsOf`) que comparten los dos están en `src/ui.js`.

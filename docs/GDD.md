@@ -54,7 +54,7 @@ pelota en el arco rival. La pelota nunca frena y con cada rebote se hace más r�
 
 ## Dash
 - Cada jugador arranca el partido **con el dash cargado**, y en cada saque después de un
-  gol se vuelve a llenar. Una vez usado, la barra tarda **30 segundos** de juego en
+  gol se vuelve a llenar. Una vez usado, la barra tarda **5 segundos** de juego en
   llenarse (no carga durante los festejos ni las repeticiones). Se ve abajo del marcador y
   como un anillo alrededor del jugador (amarillo cuando está lista).
 - Con la barra llena y moviéndote, el dash te impulsa unos 130 px en la dirección en que
@@ -125,6 +125,14 @@ pelota en el arco rival. La pelota nunca frena y con cada rebote se hace más r�
 - Después de cada gol la pelota vuelve a la velocidad normal y sale del centro hacia
   el jugador que **recibió** el gol.
 - Al inicio del partido la pelota sale hacia un jugador al azar.
+- En el 1 vs 1 contra un amigo, en "Antes de jugar" **eligen de qué lado juega el
+  jugador 1** (abajo o arriba; el jugador 2 va al otro). No cambia durante el partido y
+  queda recordado para el siguiente. Las teclas de cada uno no dependen del lado. Contra
+  la IA y en los torneos el jugador juega siempre abajo.
+- El marcador es un recuadro en la esquina de arriba a la izquierda (no tapa el arco):
+  una fila por jugador, en el mismo orden que la cancha, con su bolita, los goles y un
+  aro alrededor de la bolita que se llena con el dash (amarillo cuando está listo). En
+  los torneos el reloj va a la derecha del recuadro.
 
 ## Bot
 Cuatro niveles que suben de a escalones parejos:
